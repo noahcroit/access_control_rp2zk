@@ -1,6 +1,5 @@
 from machine import Pin
 from machine import ADC
-import time
 
 
 
@@ -11,16 +10,15 @@ STATE_EMERG  = const("EMERG")
 IO_NUM_OUTAGE = const(3)
 IO_NUM_CHARGER = const(4)
 IO_NUM_LOCK = const(5)
-IO_NUM_DOORSTATE = const(6)
+IO_NUM_DOORSTATE = const(2)
 IO_NUM_EXITBUTTON = const(22)
 IO_NUM_BATT = const(26)
 V_BATT_FULL = const(13.0)
-V_BATT_LOW  = const(11.0)
+V_BATT_LOW  = const(12.0)
 
 class SecureDoor:
-    def __init__(self):
+    def __init__(self, deepsleep=False):
         self.state = STATE_IDLE
-        self.state_charger = STATE_IDLE
         self.pin_outage = Pin(IO_NUM_OUTAGE, Pin.IN, Pin.PULL_UP)
         self.pin_lock   = Pin(IO_NUM_LOCK, Pin.OUT)
         self.pin_doorstate = Pin(IO_NUM_DOORSTATE, Pin.IN, Pin.PULL_UP)
@@ -30,6 +28,7 @@ class SecureDoor:
         self.pin_charger = Pin(IO_NUM_CHARGER, Pin.OUT)
         self.exit_cnt = 0
         self.q_exit = []
+        self.deepsleep=deepsleep
 
     def hwinit(self):
         self.lockDisable()
@@ -41,8 +40,8 @@ class SecureDoor:
     def isOutageOccur(self):
         return self.pin_outage.value()
 
-    def isDoorLock(self):
-        return not self.pin_doorstate.value()
+    def isDoorOpen(self):
+        return self.pin_doorstate.value()
 
     def isExitButtonPressed(self):
         return not self.pin_exitbutton.value()
@@ -67,18 +66,17 @@ class SecureDoor:
         v_batt = self.adc_batt.read_u16() * mcu_vref / 65535 * divider_ratio
         return v_batt
 
-    def getChargerState(self):
-        return self.state_charger
+    def isChargerActivated(self):
+        val = self.pin_charger.value()
+        return not val
 
     def chargerCheckRoutine(self):
         v_batt = self.getVbatt()
         print("v_batt=", v_batt)
         if v_batt > V_BATT_FULL:
             self.chargerDisable()
-            self.state_charger = STATE_IDLE
         elif v_batt <= V_BATT_LOW:
             self.chargerEnable()
-            self.state_charger = STATE_ACTIVE
 
     def step(self):
         # Run state machine of door lock by step.
@@ -101,10 +99,6 @@ class SecureDoor:
                 # charger management
                 self.chargerCheckRoutine()
 
-            # sleep for 10 sec (low power)
-            # cannot use deep sleep
-            time.sleep(10)
-
         elif state_current == STATE_ACTIVE:
             print("step, current state : ACTIVE")
             # monitor outage
@@ -123,14 +117,8 @@ class SecureDoor:
                     if self.exit_cnt == 0:
                         self.lockEnable()
 
-            # normal sleep for 1 sec (active)
-            time.sleep(1)
-
         elif state_current == STATE_EMERG:
             print("step, current state : EMERGENCY")
-
-            # normal sleep for 1 sec (active)
-            time.sleep(1)
 
         # Update state
         self.state = state_next
