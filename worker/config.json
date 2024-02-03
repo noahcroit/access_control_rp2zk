@@ -1,0 +1,23 @@
+{
+    "mqtt_broker": "broker.hivemq.com",
+    "mqtt_port": 1883,
+    "mqtt_topics": [
+        "failsecure/data",
+        "failsecure/cmd"
+    ],
+    "keepalive": 60,
+    "tagname": {
+        "profacex": {
+            "isopen": "access_control.profacex.isopen",
+            "lock": "access_control.profacex.lock"
+        },
+        "failsecure": {
+            "isopen": "access_control.failsecure.isopen",
+            "ischarge": "access_control.failsecure.ischarge",
+            "vbatt": "access_control.failsecure.vbatt",
+            "state": "access_control.failsecure.state",
+            "cmd": "access_control.failsecure.cmd"
+        }
+    } 
+}
+
