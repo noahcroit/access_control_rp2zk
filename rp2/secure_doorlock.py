@@ -1,5 +1,6 @@
 from machine import Pin
 from machine import ADC
+from machine import PWM
 
 
 
@@ -13,8 +14,11 @@ IO_NUM_LOCK = const(5)
 IO_NUM_DOORSTATE = const(2)
 IO_NUM_EXITBUTTON = const(22)
 IO_NUM_BATT = const(26)
+IO_NUM_BUZZER = const(18)
 V_BATT_FULL = const(13.0)
 V_BATT_LOW  = const(12.0)
+
+
 
 class SecureDoor:
     def __init__(self, deepsleep=False):
@@ -26,6 +30,7 @@ class SecureDoor:
         self.pin_batt = Pin(IO_NUM_BATT, Pin.IN)
         self.adc_batt = ADC(self.pin_batt)
         self.pin_charger = Pin(IO_NUM_CHARGER, Pin.OUT)
+        self.pin_buzzer = Pin(IO_NUM_BUZZER, Pin.OUT)
         self.exit_cnt = 0
         self.q_exit = []
         self.deepsleep=deepsleep
@@ -33,6 +38,7 @@ class SecureDoor:
     def hwinit(self):
         self.lockDisable()
         self.chargerDisable()
+        self.pin_buzzer.value(0)
         self.pin_exitbutton.irq(trigger=Pin.IRQ_FALLING, handler=self.callback_exitbutton)
 
     def getState(self):
@@ -54,6 +60,15 @@ class SecureDoor:
     def lockDisable(self):
         self.pin_lock.value(1)
         print("lock deactivated")
+
+    def buzzerEnable(self):
+        self.pwm_buzzer = PWM(self.pin_buzzer)
+        self.pwm_buzzer.duty_u16(20000)
+        self.pwm_buzzer.freq(500)
+
+    def buzzerDisable(self):
+        self.pwm_buzzer.deinit()
+        self.pin_buzzer.value(0)
 
     def chargerEnable(self):
         self.pin_charger.value(0)
@@ -94,6 +109,7 @@ class SecureDoor:
             if self.isOutageOccur():
                 self.chargerDisable()
                 self.lockEnable()
+                self.buzzerEnable()
                 self.pin_exitbutton.irq(trigger=Pin.IRQ_FALLING, handler=self.callback_exitbutton)
                 self.q_ext = []
                 state_next = STATE_ACTIVE
@@ -111,6 +127,7 @@ class SecureDoor:
             # monitor outage
             if not self.isOutageOccur():
                 self.lockDisable()
+                self.buzzerDisable()
                 state_next = STATE_IDLE
             else:
                 # monitor the exit button
