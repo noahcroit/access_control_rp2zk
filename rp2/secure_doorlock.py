@@ -33,15 +33,16 @@ class SecureDoor:
     def hwinit(self):
         self.lockDisable()
         self.chargerDisable()
+        self.pin_exitbutton.irq(trigger=Pin.IRQ_FALLING, handler=self.callback_exitbutton)
 
     def getState(self):
         return self.state
 
     def isOutageOccur(self):
-        return self.pin_outage.value()
+        return bool(self.pin_outage.value())
 
     def isDoorOpen(self):
-        return self.pin_doorstate.value()
+        return bool(self.pin_doorstate.value())
 
     def isExitButtonPressed(self):
         return not self.pin_exitbutton.value()
@@ -94,17 +95,22 @@ class SecureDoor:
                 self.chargerDisable()
                 self.lockEnable()
                 self.pin_exitbutton.irq(trigger=Pin.IRQ_FALLING, handler=self.callback_exitbutton)
+                self.q_ext = []
                 state_next = STATE_ACTIVE
             else:
                 # charger management
                 self.chargerCheckRoutine()
+
+                # exit button (in case when door is locked remotely)
+                if self.q_exit:
+                    self.q_exit.pop()
+                    self.lockDisable()
 
         elif state_current == STATE_ACTIVE:
             print("step, current state : ACTIVE")
             # monitor outage
             if not self.isOutageOccur():
                 self.lockDisable()
-                self.pin_exitbutton.irq(handler=None)
                 state_next = STATE_IDLE
             else:
                 # monitor the exit button
