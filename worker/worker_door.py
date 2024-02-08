@@ -11,11 +11,12 @@ import aiomqtt
 async def redis_sub(cfg):
     # Tag list for REDIS sub
     tagname_cmd = cfg['tagname']['failsecure']['cmd']
-
+    usr = cfg['redis_user']
+    pwd = cfg['redis_pwd']
     q_rsub = queue.Queue()
 
     # REDIS client initialize
-    redis = aioredis.from_url('redis://127.0.0.1:6379')
+    redis = aioredis.from_url('redis://127.0.0.1:6379', username=usr, password=pwd)
     pubsub = redis.pubsub()
     # REDIS subscribe
     await pubsub.subscribe('settag:'+tagname_cmd)
@@ -90,9 +91,11 @@ async def redis_pub(cfg, q_rpub):
     tagname_ischarge = cfg['tagname']['failsecure']['ischarge']
     tagname_vbatt = cfg['tagname']['failsecure']['vbatt']
     tagname_state = cfg['tagname']['failsecure']['state']
+    usr = cfg['redis_user']
+    pwd = cfg['redis_pwd']
 
     # REDIS client
-    redis = aioredis.from_url('redis://127.0.0.1:6379')
+    redis = aioredis.from_url('redis://127.0.0.1:6379', username=usr, password=pwd)
 
     try:
         async with async_timeout.timeout(30):
