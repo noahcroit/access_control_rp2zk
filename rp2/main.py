@@ -29,10 +29,10 @@ def task_displayAllDoorInfo():
     global door
     global door_dict
 
-    door_dict["vbatt"] = door.getVbatt()
-    door_dict["isopen"] = door.isDoorOpen()
-    door_dict["ischarge"] = door.isChargerActivated()
-    door_dict["state"] = door.state
+    door_dict["vbatt"] = str(door.getVbatt())
+    door_dict["isopen"] = str(door.isDoorOpen())
+    door_dict["ischarge"] = str(door.isChargerActivated())
+    door_dict["state"] = str(door.state)
     print(door_dict)
 
 def task_stepDoorState():
