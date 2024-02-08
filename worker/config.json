@@ -1,6 +1,6 @@
 {
     "mqtt_broker": "broker.hivemq.com",
-    "mqtt_port": 1883,
+    "mqtt_port": "1883",
     "mqtt_topics": [
         "failsecure/data",
         "failsecure/cmd"
