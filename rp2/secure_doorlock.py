@@ -1,11 +1,13 @@
 from machine import Pin
 from machine import ADC
 from machine import PWM
+import time
 
 
 
 # Constants for SecureDoor Class
 STATE_IDLE   = const("IDLE")
+STATE_LASTWILL = const("LASTWILL")
 STATE_ACTIVE = const("ACTIVE")
 STATE_EMERG  = const("EMERG")
 IO_NUM_OUTAGE = const(3)
@@ -21,7 +23,7 @@ V_BATT_LOW  = const(12.0)
 
 
 class SecureDoor:
-    def __init__(self, deepsleep=False):
+    def __init__(self, deepsleep=False, lastwill_cb=None):
         self.state = STATE_IDLE
         self.pin_outage = Pin(IO_NUM_OUTAGE, Pin.IN, Pin.PULL_UP)
         self.pin_lock   = Pin(IO_NUM_LOCK, Pin.OUT)
@@ -32,8 +34,11 @@ class SecureDoor:
         self.pin_charger = Pin(IO_NUM_CHARGER, Pin.OUT)
         self.pin_buzzer = Pin(IO_NUM_BUZZER, Pin.OUT)
         self.exit_cnt = 0
+        self.buzzer_cnt = 0
+        self.buzzer_stop = False
         self.q_exit = []
         self.deepsleep=deepsleep
+        self.lastwill_cb = lastwill_cb
 
     def hwinit(self):
         self.lockDisable()
@@ -110,9 +115,15 @@ class SecureDoor:
                 self.chargerDisable()
                 self.lockEnable()
                 self.buzzerEnable()
+                self.buzzer_cnt = 20
+                self.buzzer_stop = False
                 self.pin_exitbutton.irq(trigger=Pin.IRQ_FALLING, handler=self.callback_exitbutton)
                 self.q_ext = []
+                self.state = STATE_LASTWILL
+                if self.lastwill_cb is not None:
+                    self.lastwill_cb()
                 state_next = STATE_ACTIVE
+
             else:
                 # charger management
                 self.chargerCheckRoutine()
@@ -139,6 +150,18 @@ class SecureDoor:
                     self.exit_cnt -= 1
                     if self.exit_cnt == 0:
                         self.lockEnable()
+
+                # check buzzer
+                if not self.buzzer_stop:
+                    if self.buzzer_cnt <= 0:
+                        for i in range(8):
+                            self.buzzerEnable()
+                            time.sleep(0.3)
+                            self.buzzerDisable()
+                            time.sleep(0.3)
+                        self.buzzer_stop = True
+                    else:
+                        self.buzzer_cnt -= 1
 
         elif state_current == STATE_EMERG:
             print("step, current state : EMERGENCY")

@@ -49,7 +49,7 @@ def task_mqttPublish():
     global mqtt_client_id
     global wdt
 
-    if door.state == 'IDLE':
+    if not door.state == 'ACTIVE':
         # try to connect WLAN first
         timeout=0
         if not wlan.isconnected():
@@ -112,6 +112,12 @@ def task_mqttSubscribe():
             print('MQTT Reconnect Failed')
             mqtt_connected = False
 
+def lastwill():
+    # update value before connection is dead due to power outage
+    print("send last will message!")
+    task_displayAllDoorInfo()
+    task_mqttPublish()
+
 
 
 # Main Program
@@ -125,7 +131,7 @@ if __name__ == '__main__':
     # Initialize door's hardware and its dictionary (to store sensor data etc.)
     print("Initialize door...")
     door_dict = {}
-    door = SecureDoor()
+    door = SecureDoor(lastwill_cb=lastwill)
     door.hwinit()
 
     # WLAN & MQTT
@@ -166,7 +172,7 @@ if __name__ == '__main__':
     while True:
         # task scheduler
         schd.popTask()
-        time.sleep(0.2)
+        time.sleep(0.5)
 
         # feed watchdog timer
         wdt.feed()
