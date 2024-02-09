@@ -98,7 +98,7 @@ async def redis_pub(cfg, q_rpub):
     redis = aioredis.from_url('redis://127.0.0.1:6379', username=usr, password=pwd)
 
     try:
-        async with async_timeout.timeout(30):
+        async with async_timeout.timeout(3):
             # check the queue if there are any data(s) to REDIS set/publish
             while not q_rpub.empty():
                 # extract data for channel and value
@@ -124,7 +124,7 @@ async def mqtt_pub(cfg, q_rsub):
     topic = cfg['mqtt_topics'][1]
 
     try:
-        async with async_timeout.timeout(30):
+        async with async_timeout.timeout(3):
             while not q_rsub.empty():
                 data = q_rsub.get()
                 ch = data[0]
@@ -132,7 +132,7 @@ async def mqtt_pub(cfg, q_rsub):
                 print("MQTT pubishing")
                 async with aiomqtt.Client(broker) as client:
                     await client.publish(topic, payload=val)
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
 
     except asyncio.TimeoutError:
         print("asyncio timeout in redis sub")
