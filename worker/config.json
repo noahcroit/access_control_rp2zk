@@ -8,15 +8,17 @@
     "keepalive": 60,
     "redis_user": "default",
     "redis_pwd": "password",
-    "profacex_ip": "192.168.8.201",
+    "profacex_ip": "192.168.8.110",
     "profacex_port": 4370,
     "device_tags": {
         "profacex": {
             "isopen": "access_control.profacex.isopen",
-            "lockctrl": "access_control.profacex.lockctrl",
+            "reserve_request": "access_control.profacex.reserve_request",
             "userinfo": "access_control.profacex.userinfo",
             "adduser": "access_control.profacex.adduser",
-            "deluser": "access_control.profacex.deluser"
+            "deluser": "access_control.profacex.deluser",
+            "synctime": "access_control.profacex.synctime",
+            "response": "access_control.profacex.response"
         },
         "failsecure": {
             "isopen": "access_control.failsecure.isopen",
