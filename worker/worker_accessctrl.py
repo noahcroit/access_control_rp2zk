@@ -28,7 +28,7 @@ async def main():
     accessctrl.connect()
 
     # Create async tasks
-    asyncio.create_task(locker.run())
+    #asyncio.create_task(locker.run())
     asyncio.create_task(accessctrl.run())
 
     while True:
