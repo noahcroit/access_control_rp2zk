@@ -13,6 +13,8 @@
     "device_tags": {
         "profacex": {
             "isopen": "access_control.profacex.isopen",
+            "lock": "access_control.profacex.lock",
+            "unlock": "access_control.profacex.unlock",
             "reserve_request": "access_control.profacex.reserve_request",
             "userinfo": "access_control.profacex.userinfo",
             "adduser": "access_control.profacex.adduser",
