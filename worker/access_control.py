@@ -231,17 +231,20 @@ class ZktecoLock(SecureLock):
         diff = epoch_end - epoch_start
         time_current = int(time.time())
         # do nothing until epoch_start
-        while time_current < epoch_start:
-            await asyncio.sleep(3)
-            time_current = int(time.time())
-        # create temporary user for attendance within period of time, and delete user
-        print("Create temporary user for ", diff, "sec")
-        self.addUser(name="reserve", userid="100", pwd=room_pwd, userlevel=zk_const.USER_DEFAULT)
-        # reserve method
-        # "always unlock" or "only add user"
-        #await self.unlock_delay(duration_sec=diff)
-        await asyncio.sleep(diff)
-        self.delUser(userid="100")
+        if time_current <= epoch_start:
+            while time_current < epoch_start:
+                await asyncio.sleep(3)
+                time_current = int(time.time())
+            # create temporary user for attendance within period of time, and delete user
+            print("Create temporary user for ", diff, "sec")
+            self.addUser(name="reserve", userid="100", pwd=room_pwd, userlevel=zk_const.USER_DEFAULT)
+            # reserve method
+            # "always unlock" or "only add user"
+            await self.unlock_delay(duration_sec=diff)
+            #await asyncio.sleep(diff)
+            self.delUser(userid="100")
+        else:
+            print("reserved start time has been passed")
 
     def redisJsonLoad(self, json_string, func="ls"):
         data = json.loads(json_string)
