@@ -216,8 +216,14 @@ class ZktecoLock(SecureLock):
                 t_diff = int(time.time()) - t_start
             self.unlocking = False
 
-    def lock_soft(self):
+    def softlock(self):
         self.unlocking = False
+
+    async def unlock_latch(self):
+        self.unlocking = True
+        while self.unlocking:
+            self.conn.unlock()
+            await asyncio.sleep(3)
 
     async def room_reserve(self, epox_start, epox_end, room_pwd="1234"):
         print("Unlock start at ", epox_start, ", end at", epox_end)
@@ -268,6 +274,8 @@ class ZktecoLock(SecureLock):
         tagname_userinfo = self.cfg['device_tags']['profacex']['userinfo']
         tagname_response = self.cfg['device_tags']['profacex']['response']
         tagname_sync = self.cfg['device_tags']['profacex']['synctime']
+        tagname_lock = self.cfg['device_tags']['profacex']['lock']
+        tagname_unlock = self.cfg['device_tags']['profacex']['unlock']
         # REDIS subscribe
         await self.rpubsub.subscribe('settag:'+tagname_reserve)
         await self.rpubsub.subscribe('settag:'+tagname_add)
@@ -317,6 +325,12 @@ class ZktecoLock(SecureLock):
 
                 elif ch == tagname_sync:
                     self.synctime()
+
+                elif ch == tagname_lock:
+                    self.softlock()
+
+                elif ch == tagname_unlock:
+                    asyncio.create_task(self.unlock_latch())
 
             await asyncio.sleep(1)
 
