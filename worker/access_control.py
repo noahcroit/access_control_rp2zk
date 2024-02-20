@@ -225,13 +225,13 @@ class ZktecoLock(SecureLock):
             self.conn.unlock()
             await asyncio.sleep(3)
 
-    async def room_reserve(self, epox_start, epox_end, room_pwd="1234"):
-        print("Unlock start at ", epox_start, ", end at", epox_end)
-        # read epox time
-        diff = epox_end - epox_start
+    async def room_reserve(self, epoch_start, epoch_end, room_pwd="1234"):
+        print("Unlock start at ", epoch_start, ", end at", epoch_end)
+        # read epoch time
+        diff = epoch_end - epoch_start
         time_current = int(time.time())
-        # do nothing until epox_start
-        while time_current < epox_start:
+        # do nothing until epoch_start
+        while time_current < epoch_start:
             await asyncio.sleep(3)
             time_current = int(time.time())
         # create temporary user for attendance within period of time, and delete user
@@ -257,9 +257,9 @@ class ZktecoLock(SecureLock):
             user = data["username"]
             return uid, user
         elif func == "reserve":
-            epox_start = int(data["epox_start"])
-            epox_end = int(data["epox_end"])
-            return epox_start, epox_end
+            epoch_start = int(data["epoch_start"])
+            epoch_end = int(data["epoch_end"])
+            return epoch_start, epoch_end
 
     async def listenAtten(self):
         while True:
@@ -282,6 +282,8 @@ class ZktecoLock(SecureLock):
         await self.rpubsub.subscribe('settag:'+tagname_del)
         await self.rpubsub.subscribe('settag:'+tagname_userinfo)
         await self.rpubsub.subscribe('settag:'+tagname_sync)
+        await self.rpubsub.subscribe('settag:'+tagname_lock)
+        await self.rpubsub.subscribe('settag:'+tagname_unlock)
         while True:
             # wait redis message
             msg = await self.rpubsub.get_message(ignore_subscribe_messages=True)
@@ -297,14 +299,14 @@ class ZktecoLock(SecureLock):
                 # check tagname
                 if ch == tagname_reserve:
                     # extract message info
-                    epox_start, epox_end = self.redisJsonLoad(func="reserve", json_string=val)
+                    epoch_start, epoch_end = self.redisJsonLoad(func="reserve", json_string=val)
                     # generate OTP as password for room reserver & publish as ACK
                     otp = self.generate_otp()
                     d_otp = {"reserve" : {"id": "100", "otp": otp}}
                     json_message = json.dumps(d_otp)
                     await self.redis.publish("tag:"+tagname_response, json_message)
                     # make room reservation
-                    asyncio.create_task(self.room_reserve(epox_start, epox_end, otp))
+                    asyncio.create_task(self.room_reserve(epoch_start, epoch_end, otp))
 
                 elif ch == tagname_add:
                     # extract message info
