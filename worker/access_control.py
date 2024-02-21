@@ -265,9 +265,16 @@ class ZktecoLock(SecureLock):
             return epoch_start, epoch_end
 
     async def listenAtten(self):
+        self.conn.enable_device()
+        self.conn.clear_attendance()
         while True:
+            timeout=0
+            for attendance in self.conn.live_capture(3):
+                if attendance is not None:
+                    print (attendance)
+
             print("Listen to atten event...")
-            await asyncio.sleep(10)
+            await asyncio.sleep(5)
 
     async def listenRedis(self):
         # Tag list for REDIS sub
