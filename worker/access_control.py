@@ -277,10 +277,10 @@ class ZktecoLock(SecureLock):
                     print(attendance)
                     # convert attendance to json format
                     userid = attendance.user_id
-                    timestamp = attendance.timestamp
-                    status = attendance.status
+                    timestamp = str(attendance.timestamp)
+                    status = str(attendance.status)
                     d_attend = {"id": userid, "timestamp": timestamp, "status": status}
-                    json_message = json.dumps(d_atten)
+                    json_message = json.dumps(d_attend)
                     await self.redis.publish("tag:"+tagname_attend, json_message)
                 await asyncio.sleep(1)
             await asyncio.sleep(3)
