@@ -272,6 +272,7 @@ class ZktecoLock(SecureLock):
             for attendance in self.conn.live_capture(3):
                 if attendance is not None:
                     print (attendance)
+                await asyncio.sleep(1)
 
             print("Listen to atten event...")
             await asyncio.sleep(5)
