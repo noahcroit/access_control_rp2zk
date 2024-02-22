@@ -265,17 +265,25 @@ class ZktecoLock(SecureLock):
             return epoch_start, epoch_end
 
     async def listenAtten(self):
+        tagname_attend = self.cfg['device_tags']['profacex']['attend']
         self.conn.enable_device()
         self.conn.clear_attendance()
+        await asyncio.sleep(1)
         while True:
-            timeout=0
+            self.conn.enable_device()
+            print("Listen to atten event...")
             for attendance in self.conn.live_capture(3):
                 if attendance is not None:
-                    print (attendance)
+                    print(attendance)
+                    # convert attendance to json format
+                    userid = attendance.user_id
+                    timestamp = attendance.timestamp
+                    status = attendance.status
+                    d_attend = {"id": userid, "timestamp": timestamp, "status": status}
+                    json_message = json.dumps(d_atten)
+                    await self.redis.publish("tag:"+tagname_attend, json_message)
                 await asyncio.sleep(1)
-
-            print("Listen to atten event...")
-            await asyncio.sleep(5)
+            await asyncio.sleep(3)
 
     async def listenRedis(self):
         # Tag list for REDIS sub
@@ -287,7 +295,7 @@ class ZktecoLock(SecureLock):
         tagname_sync = self.cfg['device_tags']['profacex']['synctime']
         tagname_lock = self.cfg['device_tags']['profacex']['lock']
         tagname_unlock = self.cfg['device_tags']['profacex']['unlock']
-        # REDIS subscribe
+        # REDIS subscrib
         await self.rpubsub.subscribe('settag:'+tagname_reserve)
         await self.rpubsub.subscribe('settag:'+tagname_add)
         await self.rpubsub.subscribe('settag:'+tagname_del)

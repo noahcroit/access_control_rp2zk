@@ -20,7 +20,8 @@
             "adduser": "access_control.profacex.adduser",
             "deluser": "access_control.profacex.deluser",
             "synctime": "access_control.profacex.synctime",
-            "response": "access_control.profacex.response"
+            "response": "access_control.profacex.response",
+            "attend": "access_control.profacex.attend"
         },
         "failsecure": {
             "isopen": "access_control.failsecure.isopen",
