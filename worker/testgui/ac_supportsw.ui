@@ -258,6 +258,19 @@
     <string>End date</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="pushButtonZkLock">
+   <property name="geometry">
+    <rect>
+     <x>390</x>
+     <y>240</y>
+     <width>111</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Lock / Unlock</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

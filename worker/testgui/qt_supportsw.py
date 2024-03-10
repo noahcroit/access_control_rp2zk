@@ -73,6 +73,9 @@ class Ui_Form(object):
         self.labelTimeText2 = QtWidgets.QLabel(parent=Form)
         self.labelTimeText2.setGeometry(QtCore.QRect(520, 370, 67, 17))
         self.labelTimeText2.setObjectName("labelTimeText2")
+        self.pushButtonZkLock = QtWidgets.QPushButton(parent=Form)
+        self.pushButtonZkLock.setGeometry(QtCore.QRect(390, 240, 111, 41))
+        self.pushButtonZkLock.setObjectName("pushButtonZkLock")
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -95,3 +98,4 @@ class Ui_Form(object):
         self.labelZkId.setText(_translate("Form", "ID"))
         self.labelTimeText1.setText(_translate("Form", "Start date"))
         self.labelTimeText2.setText(_translate("Form", "End date"))
+        self.pushButtonZkLock.setText(_translate("Form", "Lock / Unlock"))

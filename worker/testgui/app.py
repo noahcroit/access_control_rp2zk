@@ -35,14 +35,18 @@ class AccessControlSupportSW_UI():
         self.ui.pushButtonZkAdduser.clicked.connect(self.button_handler_adduser)
         self.ui.pushButtonZkDeluser.clicked.connect(self.button_handler_deluser)
         self.ui.pushButtonZkReserve.clicked.connect(self.button_handler_reserve)
+        self.ui.pushButtonZkLock.clicked.connect(self.button_handler_locktoggle)
         self.ui.labelOTP.setText("")
         now = datetime.now()
         formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
         self.ui.lineEditTimeStart.setText(formatted_datetime)
         self.lockstate = False
-        self.redis = aioredis.from_url('redis://127.0.0.1:6379', username="default", password="password")
+        self.toggle_lockzk = False
+        self.redis = aioredis.from_url('redis://192.168.8.104:6379', username="default", password="ictadmin")
         self.rpubsub = self.redis.pubsub()
         self.q_rpub = []
+        self.lockstate_zk = False
+
     def show(self):
         self.form.show()
 
@@ -83,11 +87,24 @@ class AccessControlSupportSW_UI():
         date_end = self.ui.lineEditTimeEnd.text()
         t_start = convert_to_epoch(date_start)
         t_end = convert_to_epoch(date_end)
-        d = {"epox_start":t_start, "epox_end":t_end}
+        d = {"epoch_start":t_start, "epoch_end":t_end}
         json_message = json.dumps(d)
         ch="access_control.profacex.reserve_request"
         self.q_rpub.append((ch, json_message))
         print("reserve request")
+
+    def button_handler_locktoggle(self):
+        if self.toggle_lockzk:
+            ch="access_control.profacex.lock"
+            self.toggle_lockzk = False
+            print("Zk lock")
+        else:
+            ch="access_control.profacex.unlock"
+            self.toggle_lockzk = True
+            print("Zk unlock")
+        self.q_rpub.append((ch, "1"))
+
+
 
     async def redisPubLoop(self):
         while True:
