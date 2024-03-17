@@ -3,5 +3,4 @@ async-timeout==4.0.3
 aiomqtt==2.0.0
 aioredis==2.0.1
 paho-mqtt==1.6.1
-pyzk==0.9.1
 typing_extensions==4.9.0
