@@ -13,12 +13,14 @@ RUN apt-get install -y python3 python3-pip
 RUN mkdir /build
 RUN cd /build && git clone https://github.com/fananimi/pyzk.git
 RUN cd /build/pyzk && python3 setup.py install
-# Set volume for configuration file
-#RUN cd / && mkdir config
-#VOLUME ["/config"]
-#COPY worker/config.json /config/config.json
+
+# Copy worker into container
 RUN mkdir /worker
-COPY ./worker /worker 
+COPY ./worker /worker
+ 
+# Set volume for configuration file
+RUN cd /worker && mkdir /data
+VOLUME ["/worker/data"]
 
 # Copy requirements.txt and Install
 RUN cd /worker && pip3 install -r requirements.txt
