@@ -1,7 +1,7 @@
 # FailSecureDoor_RP2
 Firmware for Fail-secure door controller of access control room. Activate when power outage is occured.
 
-## Fail-Secure Door Controller with Pic W (RP2040)
+### Fail-Secure Door Controller with Pico W (RP2040)
 The firmware is written in micropython, stored in folder `rp2`. `ampy` can be used to upload the codes to MCU.
 To upload firmware.
 1. Upload micropython firmware .uf2 of Pico W. The latest firmware can be founded in here
@@ -20,7 +20,7 @@ ampy -p /dev/ttyACM0 network_config.json
 ampy -p /dev/ttyACM0 put umqtt 
 ampy -p /dev/ttyACM0 put main.py main.py q_scheduler.py secure_doorlock.py
 ```
-5. Verify the upload files by `ampy ls`
+5. Verify the upload files by `ampy ls` or `ampy get`
 ```
 ampy -p /dev/ttyACM0 ls
 ```
@@ -29,7 +29,7 @@ ampy -p /dev/ttyACM0 ls
 
 
 
-## Worker for ZKTeco's Access Control & FailSecure Door
+### Worker for ZKTeco's Access Control & FailSecure Door
 To deploy using Docker
 1. `cd` to the repo
 ```
