@@ -8,6 +8,8 @@ import time
 from zk import ZK
 from zk import const as zk_const
 from datetime import datetime
+import logging
+logging.basicConfig()
 
 
 
@@ -58,8 +60,10 @@ class FailSecureLock(SecureLock):
         self.isopen = None
 
     def displayData(self):
-        print("locker data ", self.name)
-        print("state=", self.state, ", isopen=", self.isopen, ", vbatt=", self.vbatt, ", ischarge=", self.ischarge)
+        #print("locker data ", self.name)
+        #print("state=", self.state, ", isopen=", self.isopen, ", vbatt=", self.vbatt, ", ischarge=", self.ischarge)
+        logging.info("locker data ", self.name)
+        logging.info("state=", self.state, ", isopen=", self.isopen, ", vbatt=", self.vbatt, ", ischarge=", self.ischarge)
 
     async def updateTag(self):
         ch = self.cfg['device_tags']['failsecure']['vbatt']
@@ -83,7 +87,8 @@ class FailSecureLock(SecureLock):
                 self.ischarge = data_json['ischarge']
                 self.isopen = data_json['isopen']
                 self.displayData()
-                print("Finish MQTT sub & update value")
+                #print("Finish MQTT sub & update value")
+                logging.info("Finish MQTT sub & update value")
                 await self.updateTag()
 
     async def listenRedis(self):
@@ -96,7 +101,8 @@ class FailSecureLock(SecureLock):
             msg = await self.rpubsub.get_message(ignore_subscribe_messages=True)
             # check received message
             if msg is not None:
-                print(f"(Reader) Message Received: {msg}")
+                #print(f"(Reader) Message Received: {msg}")
+                logging.info(f"(Reader) Message Received: {msg}")
                 # create list data with 2 fields
                 # [REDIS channel, value]
                 #ch = msg['channel'].decode('utf-8')
@@ -124,7 +130,8 @@ class FailSecureLock(SecureLock):
             await client.publish(self.topic_lock, payload="unlock")
 
     async def run(self):
-        print("failsecure:" + self.name + ", start running")
+        #print("failsecure:" + self.name + ", start running")
+        logging.info("failsecure:" + self.name + ", start running")
         asyncio.create_task(self.listenRedis())
         asyncio.create_task(self.listenMqtt())
 
@@ -145,12 +152,14 @@ class ZktecoLock(SecureLock):
         self.rpubsub = self.redis.pubsub()
 
     def connect(self):
-        print('connect to ZKteco: ', self.name)
+        #print('connect to ZKteco: ', self.name)
+        logging.info('connect to ZKteco: ', self.name)
         self.conn = self.zk_client.connect()
 
     def disconnect(self):
         if self.conn:
-            print('disconnect to ZKteco: ', self.name)
+            #print('disconnect to ZKteco: ', self.name)
+            logging.info('disconnect to ZKteco: ', self.name)
             self.conn.disconnect()
 
     def enable(self):
@@ -174,12 +183,18 @@ class ZktecoLock(SecureLock):
             privilege = 'User'
             if user.privilege == zk_const.USER_ADMIN:
                 privilege = 'Admin'
-            print('- UID #{}'.format(user.uid))
-            print('  Name       : {}'.format(user.name))
-            print('  Privilege  : {}'.format(privilege))
-            print('  Password   : {}'.format(user.password))
-            print('  Group ID   : {}'.format(user.group_id))
-            print('  User  ID   : {}'.format(user.user_id))
+            #print('- UID #{}'.format(user.uid))
+            #print('  Name       : {}'.format(user.name))
+            #print('  Privilege  : {}'.format(privilege))
+            #print('  Password   : {}'.format(user.password))
+            #print('  Group ID   : {}'.format(user.group_id))
+            #print('  User  ID   : {}'.format(user.user_id))
+            logging.info('- UID #{}'.format(user.uid))
+            logging.info('  Name       : {}'.format(user.name))
+            logging.info('  Privilege  : {}'.format(privilege))
+            logging.info('  Password   : {}'.format(user.password))
+            logging.info('  Group ID   : {}'.format(user.group_id))
+            logging.info('  User  ID   : {}'.format(user.user_id))
             d_user.update({"username":user.name})
             d_user.update({"password":user.password})
             d_user.update({"privilege":privilege})
@@ -226,7 +241,8 @@ class ZktecoLock(SecureLock):
             await asyncio.sleep(3)
 
     async def room_reserve(self, epoch_start, epoch_end, room_pwd="1234"):
-        print("Unlock start at ", epoch_start, ", end at", epoch_end)
+        #print("Unlock start at ", epoch_start, ", end at", epoch_end)
+        logging.info("Unlock start at ", epoch_start, ", end at", epoch_end)
         # read epoch time
         diff = epoch_end - epoch_start
         time_current = int(time.time())
@@ -236,7 +252,8 @@ class ZktecoLock(SecureLock):
                 await asyncio.sleep(3)
                 time_current = int(time.time())
             # create temporary user for attendance within period of time, and delete user
-            print("Create temporary user for ", diff, "sec")
+            #print("Create temporary user for ", diff, "sec")
+            logging.info("Create temporary user for ", diff, "sec")
             self.addUser(name="reserve", userid="100", pwd=room_pwd, userlevel=zk_const.USER_DEFAULT)
             # reserve method
             # "always unlock" or "only add user"
@@ -244,7 +261,8 @@ class ZktecoLock(SecureLock):
             #await asyncio.sleep(diff)
             self.delUser(userid="100")
         else:
-            print("reserved start time has been passed")
+            #print("reserved start time has been passed")
+            logging.info("reserved start time has been passed")
 
     def redisJsonLoad(self, json_string, func="ls"):
         data = json.loads(json_string)
@@ -271,10 +289,12 @@ class ZktecoLock(SecureLock):
         await asyncio.sleep(1)
         while True:
             self.conn.enable_device()
-            print("Listen to atten event...")
+            #print("Listen to atten event...")
+            logging.info("Listen to atten event...")
             for attendance in self.conn.live_capture(3):
                 if attendance is not None:
-                    print(attendance)
+                    #print(attendance)
+                    logging.info(attendance)
                     # convert attendance to json format
                     userid = attendance.user_id
                     timestamp = str(attendance.timestamp)
@@ -308,7 +328,8 @@ class ZktecoLock(SecureLock):
             msg = await self.rpubsub.get_message(ignore_subscribe_messages=True)
             # check received message
             if msg is not None:
-                print(f"(Reader) Message Received: {msg}")
+                #print(f"(Reader) Message Received: {msg}")
+                logging.info(f"(Reader) Message Received: {msg}")
                 # create list data with 2 fields
                 # [REDIS channel, value]
                 ch = msg['channel'].decode('utf-8')
@@ -342,7 +363,8 @@ class ZktecoLock(SecureLock):
                     d_users = self.displayInfoUsers()
                     json_message = json.dumps({"users":d_users})
                     await self.redis.publish("tag:"+tagname_response, json_message)
-                    print("userinfo sent")
+                    #print("userinfo sent")
+                    logging.info("userinfo sent")
 
                 elif ch == tagname_sync:
                     self.synctime()
@@ -357,7 +379,8 @@ class ZktecoLock(SecureLock):
 
     async def run(self):
         if self.conn:
-            print("ZKteco:" + self.name + ", start running")
+            #print("ZKteco:" + self.name + ", start running")
+            logging.info("ZKteco:" + self.name + ", start running")
             asyncio.create_task(self.listenRedis())
             asyncio.create_task(self.listenAtten())
 
