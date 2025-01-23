@@ -1,0 +1,12 @@
+{
+    "ssid": "",
+    "pwd": "",
+    "mqtt_broker": "",
+    "mqtt_port": 1883,
+    "topics": [
+        "failsecure/data",
+        "failsecure/cmd"
+    ],
+    "keepalive": 60
+}
+
