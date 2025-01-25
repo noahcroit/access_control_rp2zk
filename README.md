@@ -1,45 +1,13 @@
-# FailSecureDoor_RP2
-Firmware for Fail-secure door controller of access control room. Activate when power outage is occured.
+# Access Control Project
+The project consists of \
+- PCB design and the firmware of `Fail-Secure` door lock for the access control room. \
+- Python worker of access control interface. This software will interract with the room management system later \
 
-### Fail-Secure Door Controller with Pico W (RP2040)
-The firmware is written in micropython, stored in folder `rp2`. `ampy` can be used to upload the codes to MCU.
-To upload firmware.
-1. Upload micropython firmware .uf2 of Pico W. The latest firmware can be founded in here
-    https://micropython.org/download/RPI_PICO_W/
-2. `cd` to the repo
-```
-cd access_control_rpzk
-cd rp2
-```
-3. Run `ampy put` to put the network configuration .json file into MCU
-```
-ampy -p /dev/ttyACM0 network_config.json
-```
-4. Run `ampy put` to put the codes into MCU
-```
-ampy -p /dev/ttyACM0 put umqtt 
-ampy -p /dev/ttyACM0 put main.py main.py q_scheduler.py secure_doorlock.py
-```
-5. Verify the upload files by `ampy ls` or `ampy get`
-```
-ampy -p /dev/ttyACM0 ls
-```
-6. Reset MCU and run it.
+The project has 2 different version, v2023 and v2024.
 
+## v2023 version
+This version was focused on Proof-of-Concept and do a rapid prototype with both HW and SW. Micropython was used for the firmware development in RP2040 as for the Doorlock controller\
+ZkTeco's access control was being used in this phase.
 
-
-
-### Worker for ZKTeco's Access Control & FailSecure Door
-To deploy using Docker
-1. `cd` to the repo
-```
-cd access_control_rpzk
-```
-2. Build worker image
-```
-sudo docker build -t acworker-image .
-```
-3. Run container from built image
-```
-sudo docker run -d --network=host --name=acworker acworker-image
-```
+## v2024 version (the current ver.) 
+PCB design with KiCAD for the doorlock controller. Hikvision's access control is being used in this phase instead of ZkTeco's.
