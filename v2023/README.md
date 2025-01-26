@@ -1,7 +1,7 @@
 # FailSecureDoor_RP2 version 1 (2023)
-Firmware for Fail-secure door controller of access control room. Activate when power outage is occured. \
-This is the rapid prototype project, PCB is constructed in a prototype way and Micropython are being used to develop the firmware. \
-The access control unit is from ZkTeco brand. `pyzk` project is used for the python module to interface with ZkTeco AC. \
+Firmware for Fail-secure door controller of access control room. It activates when power outage is occured. <br>
+This is the rapid prototype project, PCB is constructed in a prototype way and Micropython are being used to develop the firmware. <br>
+The access control unit is from ZkTeco brand. `pyzk` project is used for the python module to interface with ZkTeco AC. <br>
 The project can be found in here https://github.com/fananimi/pyzk
 
 ### Fail-Secure Door Controller with Pico W (RP2040)

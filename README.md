@@ -1,7 +1,7 @@
 # Access Control Project
-The project consists of \
-- PCB design and the firmware of `Fail-Secure` door lock for the access control room. \
-- Python worker of access control interface. This software will interract with the room management system later \
+The project consists of <br>
+- PCB design and the firmware of `Fail-Secure` door lock for the access control room. <br>
+- Python worker of access control interface. This software will interract with the room management system later <br>
 
 The project has 2 different version, v2023 and v2024.
 
