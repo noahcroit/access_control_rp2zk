@@ -18,9 +18,18 @@
 
 
 bool button_flag=false;
+bool zerocross_flag=false;
+
+
+
 void isr_gpio(uint gpio, uint32_t events) {
     printf("button is pressed\n");
-    button_flag=true;
+    if (gpio == DI_EXITBUTTON) {
+        button_flag=true;
+    }
+    if (gpio == DI_ZEROCROSS) {
+        zerocross_flag=true;
+    }
 }
 
 void hwInit();
@@ -32,19 +41,30 @@ int main() {
     hwInit();
 	
     int current_led_state=0;
-    int current_buzzer_state=0;
+    int current_lock_state=0;
     while (1) {
+        // task : blinking 
         current_led_state = gpio_get(DO_LED_BL);
         gpio_put(DO_LED_BL, !current_led_state);
-        gpio_put(DO_LED_Y, !current_led_state);
-
-        if(button_flag){
-            gpio_put(DO_BUZZER, !current_buzzer_state);
-            gpio_put(DO_DOORLOCK, !current_buzzer_state);
-            current_buzzer_state = !current_buzzer_state;
+        sleep_ms(1000);
+        
+        // task : button & relay
+        if(button_flag) {
+            gpio_put(DO_DOORLOCK, !current_lock_state);
+            current_lock_state = !current_lock_state;
             button_flag=false;
         }
-        sleep_ms(1000);
+
+        // task : zero-crossing detection for outage
+        if(zerocross_flag) {
+            gpio_put(DO_LED_Y, 1);
+            gpio_put(DO_BUZZER, 1);
+            zerocross_flag=false;
+        }
+        else{
+            gpio_put(DO_LED_Y, 0);
+            gpio_put(DO_BUZZER, 0);
+        }
     }
     return 0;
 }
