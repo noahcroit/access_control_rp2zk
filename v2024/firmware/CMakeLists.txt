@@ -12,6 +12,10 @@ pico_sdk_init()
 # rest of your project
 add_executable(failsecure_fw
     src/main_app.c
+    src/app_button.c
+    src/app_led.c
+    src/app_buzzer.c
+    src/board_driver_rp2.c
 )
 
 # Add pico_stdlib library which aggregates commonly used features

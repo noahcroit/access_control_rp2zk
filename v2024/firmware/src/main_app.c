@@ -1,14 +1,17 @@
 #include <stdio.h>
-#include "pico/stdlib.h"
-#include "pico/cyw43_arch.h"
+#include "board_driver_rp2.h"
+#include "app_button.h"
+#include "app_led.h"
+#include "app_buzzer.h"
 
 #define DI_ZEROCROSS 2
+#define DI_USERBUTTON 10
 #define DI_EXITBUTTON 10
 #define DI_SW1 6
 #define DI_SW2 7
 #define DI_SW3 8
 #define DI_SW4 9
-#define DO_LED_BL 4
+#define DO_LED_B 4
 #define DO_LED_Y 5
 #define DO_BUZZER 11
 #define DO_DOORLOCK 18
@@ -17,93 +20,77 @@
 
 
 
-bool button_flag=false;
-bool zerocross_flag=false;
+/*
+ * Callback functions for apps
+ *
+ */
+void on_button_pressed_onboard();
+void on_button_pressed_exit();
 
 
 
-void isr_gpio(uint gpio, uint32_t events) {
-    printf("button is pressed\n");
-    if (gpio == DI_EXITBUTTON) {
-        button_flag=true;
-    }
-    if (gpio == DI_ZEROCROSS) {
-        zerocross_flag=true;
-    }
-}
+app_button_t button;  
+app_led_t led;  
+app_buzzer_t buzzer;  
 
-void hwInit();
 
 
 int main() {
     // system initalize
-    stdio_init_all();
-    hwInit();
-	
-    int current_led_state=0;
-    int current_lock_state=0;
-    while (1) {
-        // task : blinking 
-        current_led_state = gpio_get(DO_LED_BL);
-        gpio_put(DO_LED_BL, !current_led_state);
-        sleep_ms(1000);
-        
-        // task : button & relay
-        if(button_flag) {
-            gpio_put(DO_DOORLOCK, !current_lock_state);
-            current_lock_state = !current_lock_state;
-            button_flag=false;
-        }
+    driver_rp2_sysinit();
 
-        // task : zero-crossing detection for outage
-        if(zerocross_flag) {
-            gpio_put(DO_LED_Y, 1);
-            gpio_put(DO_BUZZER, 1);
-            zerocross_flag=false;
+    // App button initialize
+    button.driver_read_gpio = driver_rp2_read_gpio;
+    button.driver_set_gpio_input = driver_rp2_set_gpio_input;
+    button.driver_enable_gpio_global_interrupt = driver_rp2_enable_gpio_global_interrupt;
+    button.driver_set_gpio_callback = driver_rp2_set_gpio_callback;
+    button.cb_onboard = on_button_pressed_onboard; 
+    button.cb_exit = on_button_pressed_exit; 
+    button.gpio_num_onboard_button = DI_USERBUTTON;
+    button.gpio_num_exit_button = DI_USERBUTTON;
+    button.gpio_num_dipsw1 = DI_SW1;
+    button.gpio_num_dipsw2 = DI_SW2;
+    button.gpio_num_dipsw3 = DI_SW3;
+    button.gpio_num_dipsw4 = DI_SW4;
+    app_button_init(&button);
+
+    // App LED initialize
+    led.driver_write_gpio = driver_rp2_write_gpio;
+    led.driver_set_gpio_output = driver_rp2_set_gpio_output;
+    led.gpio_num_led_y = DO_LED_Y;
+    led.gpio_num_led_b = DO_LED_B;
+    app_led_init(&led);
+
+    // App LED initialize
+    buzzer.driver_write_gpio = driver_rp2_write_gpio;
+    buzzer.driver_set_gpio_output = driver_rp2_set_gpio_output;
+    buzzer.gpio_num = DO_BUZZER;
+    app_buzzer_init(&buzzer);
+
+    while (1) {
+        if (app_is_button_pressed_onboard(&button)) {
+            app_led_y_on(&led);
+            app_buzzer_on(&buzzer);
         }
         else{
-            gpio_put(DO_LED_Y, 0);
-            gpio_put(DO_BUZZER, 0);
+            app_led_y_off(&led);
+            app_buzzer_off(&buzzer);
         }
+        driver_sleep_ms(100);
     }
     return 0;
 }
 
 
 
-void hwInit(){
-    /*
-     * WiFi module cyw43 initialize
-     *
-     */
-    while (cyw43_arch_init()) {
-        printf("failed to initialise\n");
-        sleep_ms(1000);
-    }
-
-    /*
-     * Initialize GPIO
-     */
-    gpio_set_function(DO_LED_BL, GPIO_FUNC_SIO);
-    gpio_set_function(DO_LED_Y, GPIO_FUNC_SIO);
-    gpio_set_function(DO_BUZZER, GPIO_FUNC_SIO);
-    gpio_set_function(DO_DOORLOCK, GPIO_FUNC_SIO);
-    gpio_set_function(DI_ZEROCROSS, GPIO_FUNC_SIO);
-    gpio_set_function(DI_EXITBUTTON, GPIO_FUNC_SIO);
-
-    gpio_set_dir(DO_LED_BL, GPIO_OUT);
-    gpio_set_dir(DO_LED_Y, GPIO_OUT);
-    gpio_set_dir(DO_BUZZER, GPIO_OUT);
-    gpio_set_dir(DO_DOORLOCK, GPIO_OUT);
-    gpio_set_dir(DI_ZEROCROSS, GPIO_IN);
-    gpio_set_dir(DI_EXITBUTTON, GPIO_IN);
-    gpio_pull_up(DI_ZEROCROSS);
-    gpio_pull_up(DI_EXITBUTTON);
-
-    // Interrupt Setup
-    irq_set_enabled(IO_IRQ_BANK0, true);
-    gpio_set_irq_enabled (DI_ZEROCROSS, GPIO_IRQ_EDGE_FALL, true);
-    gpio_set_irq_enabled (DI_EXITBUTTON, GPIO_IRQ_EDGE_FALL, true);
-    gpio_set_irq_callback (&isr_gpio);
+/*
+ * Callback functions for apps
+ *
+ */
+void on_button_pressed_onboard(){
+    driver_debug_print("Onboard button is pressed!\n");
 }
 
+void on_button_pressed_exit(){
+    driver_debug_print("Exit button is pressed!\n");
+}
