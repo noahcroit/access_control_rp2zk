@@ -3,6 +3,7 @@
 #include "app_button.h"
 #include "app_led.h"
 #include "app_buzzer.h"
+#include "app_dsk4t100.h"
 
 #define DI_ZEROCROSS 2
 #define DI_USERBUTTON 10
@@ -32,6 +33,7 @@ void on_button_pressed_exit();
 app_button_t button;  
 app_led_t led;  
 app_buzzer_t buzzer;  
+app_dsk4t100_t locker;  
 
 
 
@@ -61,22 +63,44 @@ int main() {
     led.gpio_num_led_b = DO_LED_B;
     app_led_init(&led);
 
-    // App LED initialize
+    // App buzzer initialize
     buzzer.driver_write_gpio = driver_rp2_write_gpio;
     buzzer.driver_set_gpio_output = driver_rp2_set_gpio_output;
     buzzer.gpio_num = DO_BUZZER;
     app_buzzer_init(&buzzer);
 
+    // App bolt-lock dsk4t100 initialize
+    locker.driver_read_gpio = driver_rp2_read_gpio;
+    locker.driver_write_gpio = driver_rp2_write_gpio;
+    locker.driver_set_gpio_input = driver_rp2_set_gpio_input;
+    locker.driver_set_gpio_output = driver_rp2_set_gpio_output;
+    locker.gpio_num_lockctrl = DO_DOORLOCK;
+    locker.gpio_num_lockstatus = DI_LOCKSTATUS;
+    locker.gpio_num_doorstatus = DI_DOORSTATUS;
+    app_dsk4t100_init(&locker);
+
     while (1) {
+        // button function for testing LEDs & bolt-lock
         if (app_is_button_pressed_onboard(&button)) {
             app_led_y_on(&led);
             app_buzzer_on(&buzzer);
+            app_dsk4t100_unlock(&locker);
         }
         else{
             app_led_y_off(&led);
             app_buzzer_off(&buzzer);
+            app_dsk4t100_lock(&locker);
         }
-        driver_sleep_ms(100);
+
+        // check door status from bolt-lock
+        bool isopen;
+        isopen = app_dsk4t100_is_open(&locker);
+        driver_debug_print("door status : ");
+        driver_debug_print_int(isopen);
+        driver_debug_print("\n");
+        
+        // sleep
+        driver_sleep_ms(250);
     }
     return 0;
 }

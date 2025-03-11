@@ -11,7 +11,7 @@ void app_button_init(app_button_t *dev) {
     dev->driver_set_gpio_input(dev->gpio_num_dipsw3);
     dev->driver_set_gpio_input(dev->gpio_num_dipsw4);
     
-    // Interrupt setup
+    // Interrupt setup for pressing event
     dev->driver_enable_gpio_global_interrupt();
     dev->driver_set_gpio_callback(dev->gpio_num_onboard_button, dev->cb_onboard);
     dev->driver_set_gpio_callback(dev->gpio_num_exit_button, dev->cb_exit);
@@ -33,14 +33,4 @@ uint8_t app_read_dipswitch(app_button_t *dev) {
     sw[3] = dev->driver_read_gpio(dev->gpio_num_dipsw4);
     return (sw[3] << 3) | (sw[2] << 2) | (sw[1] << 1) | (sw[0] << 0);
 }
-
-/*
-void on_button_pressed_onboard(void *app_data) {
-
-}
-
-void on_button_pressed_exit(void *app_data) {
-
-}
-*/
 

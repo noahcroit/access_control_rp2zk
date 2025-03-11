@@ -15,6 +15,7 @@ add_executable(failsecure_fw
     src/app_button.c
     src/app_led.c
     src/app_buzzer.c
+    src/app_dsk4t100.c
     src/board_driver_rp2.c
 )
 
