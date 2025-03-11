@@ -10,8 +10,12 @@
 // serial print and sleep function
 #if DEBUG == 1
 #define driver_debug_print(x) printf(x)
+#define driver_debug_print_int(x) printf("%d", x)
+#define driver_debug_print_f32(x) printf("%f", x)
 #else
 #define driver_debug_print(x)
+#define driver_debug_print_int(x)
+#define driver_debug_print_float(x)
 #endif
 
 #define driver_sleep_ms(x) sleep_ms(x)
