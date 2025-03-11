@@ -30,53 +30,57 @@ void on_button_pressed_exit();
 
 
 
-app_button_t button;  
-app_led_t led;  
-app_buzzer_t buzzer;  
-app_dsk4t100_t locker;  
+/*
+ * Struct for all devices
+ *
+ */
+app_button_t button = {
+    .driver_read_gpio = driver_rp2_read_gpio,
+    .driver_set_gpio_input = driver_rp2_set_gpio_input,
+    .driver_enable_gpio_global_interrupt = driver_rp2_enable_gpio_global_interrupt,
+    .driver_set_gpio_callback = driver_rp2_set_gpio_callback,
+    .cb_onboard = on_button_pressed_onboard, 
+    .cb_exit = on_button_pressed_exit,
+    .gpio_num_onboard_button = DI_USERBUTTON,
+    .gpio_num_exit_button = DI_USERBUTTON,
+    .gpio_num_dipsw1 = DI_SW1,
+    .gpio_num_dipsw2 = DI_SW2,
+    .gpio_num_dipsw3 = DI_SW3,
+    .gpio_num_dipsw4 = DI_SW4
+};
+
+app_led_t led = {
+    .driver_write_gpio = driver_rp2_write_gpio,
+    .driver_set_gpio_output = driver_rp2_set_gpio_output,
+    .gpio_num_led_y = DO_LED_Y,
+    .gpio_num_led_b = DO_LED_B
+};
+
+app_buzzer_t buzzer = {
+    .driver_write_gpio = driver_rp2_write_gpio,
+    .driver_set_gpio_output = driver_rp2_set_gpio_output,
+    .gpio_num = DO_BUZZER
+};
+
+app_dsk4t100_t locker = {
+    .driver_read_gpio = driver_rp2_read_gpio,
+    .driver_write_gpio = driver_rp2_write_gpio,
+    .driver_set_gpio_input = driver_rp2_set_gpio_input,
+    .driver_set_gpio_output = driver_rp2_set_gpio_output,
+    .gpio_num_lockctrl = DO_DOORLOCK,
+    .gpio_num_lockstatus = DI_LOCKSTATUS,
+    .gpio_num_doorstatus = DI_DOORSTATUS
+};  
 
 
 
 int main() {
     // system initalize
     driver_rp2_sysinit();
-
-    // App button initialize
-    button.driver_read_gpio = driver_rp2_read_gpio;
-    button.driver_set_gpio_input = driver_rp2_set_gpio_input;
-    button.driver_enable_gpio_global_interrupt = driver_rp2_enable_gpio_global_interrupt;
-    button.driver_set_gpio_callback = driver_rp2_set_gpio_callback;
-    button.cb_onboard = on_button_pressed_onboard; 
-    button.cb_exit = on_button_pressed_exit; 
-    button.gpio_num_onboard_button = DI_USERBUTTON;
-    button.gpio_num_exit_button = DI_USERBUTTON;
-    button.gpio_num_dipsw1 = DI_SW1;
-    button.gpio_num_dipsw2 = DI_SW2;
-    button.gpio_num_dipsw3 = DI_SW3;
-    button.gpio_num_dipsw4 = DI_SW4;
+    // App initialize
     app_button_init(&button);
-
-    // App LED initialize
-    led.driver_write_gpio = driver_rp2_write_gpio;
-    led.driver_set_gpio_output = driver_rp2_set_gpio_output;
-    led.gpio_num_led_y = DO_LED_Y;
-    led.gpio_num_led_b = DO_LED_B;
     app_led_init(&led);
-
-    // App buzzer initialize
-    buzzer.driver_write_gpio = driver_rp2_write_gpio;
-    buzzer.driver_set_gpio_output = driver_rp2_set_gpio_output;
-    buzzer.gpio_num = DO_BUZZER;
     app_buzzer_init(&buzzer);
-
-    // App bolt-lock dsk4t100 initialize
-    locker.driver_read_gpio = driver_rp2_read_gpio;
-    locker.driver_write_gpio = driver_rp2_write_gpio;
-    locker.driver_set_gpio_input = driver_rp2_set_gpio_input;
-    locker.driver_set_gpio_output = driver_rp2_set_gpio_output;
-    locker.gpio_num_lockctrl = DO_DOORLOCK;
-    locker.gpio_num_lockstatus = DI_LOCKSTATUS;
-    locker.gpio_num_doorstatus = DI_DOORSTATUS;
     app_dsk4t100_init(&locker);
 
     while (1) {
