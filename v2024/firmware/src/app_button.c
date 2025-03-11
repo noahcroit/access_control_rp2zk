@@ -4,12 +4,12 @@
 
 void app_button_init(app_button_t *dev) {
     // GPIO basic input setup
-    dev->driver_set_gpio_input(dev->gpio_num_onboard_button);
-    dev->driver_set_gpio_input(dev->gpio_num_exit_button);
-    dev->driver_set_gpio_input(dev->gpio_num_dipsw1);
-    dev->driver_set_gpio_input(dev->gpio_num_dipsw2);
-    dev->driver_set_gpio_input(dev->gpio_num_dipsw3);
-    dev->driver_set_gpio_input(dev->gpio_num_dipsw4);
+    dev->driver_set_gpio_input(dev->gpio_num_onboard_button, true);
+    dev->driver_set_gpio_input(dev->gpio_num_exit_button, true);
+    dev->driver_set_gpio_input(dev->gpio_num_dipsw1, false);
+    dev->driver_set_gpio_input(dev->gpio_num_dipsw2, false);
+    dev->driver_set_gpio_input(dev->gpio_num_dipsw3, false);
+    dev->driver_set_gpio_input(dev->gpio_num_dipsw4, false);
     
     // Interrupt setup for pressing event
     dev->driver_enable_gpio_global_interrupt();

@@ -5,8 +5,8 @@
 
 typedef struct {
     bool (*driver_read_gpio) (uint8_t);
-    bool (*driver_write_gpio) (uint8_t, bool);
-    void (*driver_set_gpio_input) (uint8_t);
+    void (*driver_write_gpio) (uint8_t, bool);
+    void (*driver_set_gpio_input) (uint8_t, bool);
     void (*driver_set_gpio_output) (uint8_t);
     uint8_t gpio_num_lockctrl;
     uint8_t gpio_num_lockstatus;

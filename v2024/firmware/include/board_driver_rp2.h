@@ -23,7 +23,7 @@
 
 
 void driver_rp2_sysinit();
-void driver_rp2_set_gpio_input(uint8_t gpio_num);
+void driver_rp2_set_gpio_input(uint8_t gpio_num, bool use_interrupt);
 void driver_rp2_set_gpio_output(uint8_t gpio_num);
 bool driver_rp2_read_gpio(uint8_t gpio_num);
 void driver_rp2_write_gpio(uint8_t gpio_num, bool value);

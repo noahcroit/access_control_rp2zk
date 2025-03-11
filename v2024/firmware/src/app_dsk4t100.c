@@ -6,8 +6,8 @@
 void app_dsk4t100_init(app_dsk4t100_t *dev) {
     // GPIO basic input setup
     dev->driver_set_gpio_output(dev->gpio_num_lockctrl);
-    dev->driver_set_gpio_input(dev->gpio_num_lockstatus);
-    dev->driver_set_gpio_input(dev->gpio_num_doorstatus);
+    dev->driver_set_gpio_input(dev->gpio_num_lockstatus, false);
+    dev->driver_set_gpio_input(dev->gpio_num_doorstatus, false);
     app_dsk4t100_lock(dev);
 }
 

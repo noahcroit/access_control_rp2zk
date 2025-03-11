@@ -7,6 +7,9 @@ static void (*gpio_cb[TOTAL_NUM_GPIO_RP2]) (void);
 
 // ISR for GPIO
 static void isr_gpio(uint gpio, uint32_t events) {
+    driver_debug_print("ISR GPIO:");
+    driver_debug_print_int(gpio);
+    driver_debug_print("\n");
     gpio_cb[gpio]();
 }
 
@@ -17,14 +20,16 @@ void driver_rp2_sysinit() {
     stdio_init_all();
 }
 
-void driver_rp2_set_gpio_input(uint8_t gpio_num) {
+void driver_rp2_set_gpio_input(uint8_t gpio_num, bool use_interrupt) {
     // Direction and pull-up setup
-    gpio_set_function(gpio_num, GPIO_FUNC_SIO);
+    gpio_set_function((unsigned char)gpio_num, GPIO_FUNC_SIO);
     gpio_set_dir(gpio_num, GPIO_IN);
     gpio_pull_up(gpio_num);
     
     // Enable an interrupt for target pin
-    gpio_set_irq_enabled (gpio_num, GPIO_IRQ_EDGE_FALL, true);
+    if (use_interrupt) {
+        gpio_set_irq_enabled ((unsigned char)gpio_num, GPIO_IRQ_EDGE_FALL, true);
+    }
 }
 
 void driver_rp2_enable_gpio_global_interrupt() {
@@ -44,12 +49,12 @@ bool driver_rp2_read_gpio(uint8_t gpio_num) {
 
 void driver_rp2_set_gpio_output(uint8_t gpio_num) {
     // Direction and pull-up setup
-    gpio_set_function(gpio_num, GPIO_FUNC_SIO);
-    gpio_set_dir(gpio_num, GPIO_OUT);
-    gpio_disable_pulls(gpio_num);
+    gpio_set_function((unsigned char)gpio_num, GPIO_FUNC_SIO);
+    gpio_set_dir((unsigned char)gpio_num, GPIO_OUT);
+    gpio_disable_pulls((unsigned char)gpio_num);
 }
 
 void driver_rp2_write_gpio(uint8_t gpio_num, bool value) {
-    gpio_put(gpio_num, value);
+    gpio_put((unsigned char)gpio_num, value);
 }
 

@@ -5,7 +5,7 @@
 
 typedef struct {
     bool (*driver_read_gpio) (uint8_t);
-    void (*driver_set_gpio_input) (uint8_t);
+    void (*driver_set_gpio_input) (uint8_t, bool);
     void (*driver_enable_gpio_global_interrupt) (void);
     void (*driver_set_gpio_callback) (uint8_t, void (*) (void));
     void (*cb_onboard) (void);
