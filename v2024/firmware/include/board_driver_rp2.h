@@ -25,6 +25,20 @@
 
 #define driver_sleep_ms(x) sleep_ms(x)
 
+#define DI_ZEROCROSS 2
+#define DI_EXITBUTTON 10
+#define DI_SW1 6
+#define DI_SW2 7
+#define DI_SW3 8
+#define DI_SW4 9
+#define DO_LED_B 4
+#define DO_LED_Y 5
+#define DO_BUZZER 11
+#define DO_DOORLOCK 18
+#define DI_DOORSTATUS 19
+#define DI_LOCKSTATUS 20
+#define DO_SLIDEDOOR 28
+
 
 
 void driver_rp2_sysinit();

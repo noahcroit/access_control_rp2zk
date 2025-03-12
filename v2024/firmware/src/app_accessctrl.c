@@ -17,3 +17,11 @@ void app_accessctrl_unlock(app_accessctrl_t *dev) {
     dev->driver_write_gpio(dev->gpio_num_slidedoor, false);
     dev->lockstate = false;
 }
+
+bool app_accessctrl_is_lock_requested(app_accessctrl_t *dev) {
+   return false; 
+}
+
+bool app_accessctrl_is_unlock_requested(app_accessctrl_t *dev) {
+   return false; 
+}

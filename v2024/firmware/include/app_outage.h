@@ -2,7 +2,7 @@
 #define APP_OUTAGE_H
 
 #include "board_driver_rp2.h"
-#define THRESHOLD_COUNT_OUTAGE 10
+#define THRESHOLD_COUNT_OUTAGE 5
 
 typedef struct {
     bool (*driver_read_gpio) (uint8_t);

@@ -11,17 +11,11 @@ static uint32_t global_tick=0;
 
 // ISR for GPIO
 static void isr_gpio(uint gpio, uint32_t events) {
-    driver_debug_print("ISR GPIO:");
-    driver_debug_print_int(gpio);
-    driver_debug_print("\n");
     gpio_cb[gpio]();
 }
 
 static bool isr_global_timer(struct repeating_timer *t) {
     global_tick++;
-    driver_debug_print("ISR Timer:");
-    driver_debug_print_int(global_tick);
-    driver_debug_print("\n");
 }
 
 void driver_rp2_sysinit() {

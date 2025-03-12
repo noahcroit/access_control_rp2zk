@@ -14,5 +14,7 @@ typedef struct {
 void app_accessctrl_init(app_accessctrl_t *dev);
 void app_accessctrl_lock(app_accessctrl_t *dev);
 void app_accessctrl_unlock(app_accessctrl_t *dev);
+bool app_accessctrl_is_lock_requested(app_accessctrl_t *dev);
+bool app_accessctrl_is_unlock_requested(app_accessctrl_t *dev);
 
 #endif
