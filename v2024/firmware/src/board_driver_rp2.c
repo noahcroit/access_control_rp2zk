@@ -75,3 +75,39 @@ void driver_rp2_create_global_tick(uint32_t tick_period_ms) {
 uint32_t driver_rp2_get_global_tick() {
     return global_tick;
 }
+
+int driver_rp2_enable_wifi() {
+    uint8_t timeout=WIFI_INIT_TIMEOUT;
+    while (cyw43_arch_init() && (timeout > 0)) {
+        sleep_ms(1000);
+        timeout--;
+    }
+    if (timeout == 0) {
+        return -1;
+    }
+    else {
+        cyw43_arch_enable_sta_mode();
+        return 0;
+    }
+}
+
+int driver_rp2_connect_to_wifi(const char *ssid, const char *pwd, uint32_t timeout) {
+    return cyw43_arch_wifi_connect_timeout_ms(ssid, pwd, CYW43_AUTH_WPA2_AES_PSK, timeout);
+}
+
+bool driver_rp2_is_wifi_connected() {
+    if (cyw43_wifi_link_status (&cyw43_state, CYW43_ITF_STA) == CYW43_LINK_JOIN) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+void driver_rp2_watchdog_enable(uint32_t delay_ms) {
+    watchdog_enable(delay_ms, false);
+}
+
+void driver_rp2_watchdog_feed() {
+    watchdog_update();
+}

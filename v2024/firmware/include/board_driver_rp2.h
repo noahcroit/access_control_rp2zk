@@ -8,9 +8,11 @@
 #include "hardware/clocks.h"
 #include "hardware/structs/pll.h"
 #include "hardware/structs/clocks.h"
+#include "hardware/watchdog.h"
 #define DEBUG 1
 #define TOTAL_NUM_GPIO_RP2 32
 #define NUM_OF_MAX_TIMER_CB 16
+#define WIFI_INIT_TIMEOUT 5
 
 // serial print and sleep function
 #if DEBUG == 1
@@ -37,7 +39,7 @@
 #define DO_DOORLOCK 18
 #define DI_DOORSTATUS 19
 #define DI_LOCKSTATUS 20
-#define DO_SLIDEDOOR 28
+#define DO_ACCESSCTRLLOCK 28
 
 
 
@@ -50,5 +52,10 @@ void driver_rp2_enable_gpio_global_interrupt();
 void driver_rp2_set_gpio_callback(uint8_t gpio_num, void (*cb) (void));
 void driver_rp2_create_global_tick(uint32_t tick_period_ms);
 uint32_t driver_rp2_get_global_tick();
+int driver_rp2_enable_wifi();
+int driver_rp2_connect_to_wifi(const char *ssid, const char *pwd, uint32_t timeout);
+bool driver_rp2_is_wifi_connected();
+void driver_rp2_watchdog_enable(uint32_t delay_ms);
+void driver_rp2_watchdog_feed();
 
 #endif
