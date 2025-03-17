@@ -8,6 +8,8 @@ typedef struct {
     void (*driver_set_gpio_output) (uint8_t);
     uint8_t gpio_num_slidedoor;
     bool lockstate;
+    bool lockrequested;
+    bool unlockrequested;
 
 }app_accessctrl_t;
 

@@ -18,6 +18,7 @@ add_executable(failsecure_fw
     src/app_dsk4t100.c
     src/app_outage.c
     src/app_accessctrl.c
+    src/app_mqtt.c
     src/board_driver_rp2.c
 )
 
