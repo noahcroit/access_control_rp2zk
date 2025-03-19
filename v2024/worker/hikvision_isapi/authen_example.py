@@ -3,7 +3,8 @@ import requests
 
 
 ipaddr = '192.168.0.101'
-request_url = 'http://' + ipaddr + ':80/ISAPI/System/deviceInfo'
+port = 80
+request_url = 'http://' + ipaddr + ':' + str(80) + '/ISAPI/System/deviceInfo'
 
 # Set the authentication information
 admin_username='admin'
