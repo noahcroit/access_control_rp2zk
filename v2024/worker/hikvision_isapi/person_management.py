@@ -50,7 +50,7 @@ def isapi_accessctrl_searchuser(ipaddr: str, port: int, auth, user):
     opts = res_json["UserInfo"]["supportFunction"]["@opt"]
     if 'get' in opts:
         print("get option exists in supportFunction")
-        body = generate_payload_searchuser(user["employeeID"])
+        body = generate_payload_searchuser(user)
         request_url = "http://" + ipaddr + ":" + str(port) + "/ISAPI/AccessControl/UserInfo/Search?format=json"
         response = requests.post(request_url, data=json.dumps(body), auth=auth)
         res_json = json.loads(response.content)
@@ -71,9 +71,30 @@ def isapi_accessctrl_adduser(ipaddr: str, port: int, auth, user):
     if "post" in opts:
         print("POST option exists in supportFunction")
         print("Try adding user")
-        body = generate_payload_adduser(user["employeeID"], user["name"], user["password"], user["gender"])
+        body = generate_payload_adduser(user)
         request_url = "http://" + ipaddr + ":" + str(port) + "/ISAPI/AccessControl/UserInfo/Record?format=json"
         response = requests.post(request_url, data=json.dumps(body), auth=auth)
+        res_json = json.loads(response.content)
+        return res_json
+    else:
+        return None
+
+def isapi_accessctrl_updateuser(ipaddr: str, port: int, auth, user):
+    # Add
+    # 1. GET /ISAPI/AccessControl/UserInfo/capabilities?
+    # 2. Check whether it supportFunction contains 'put' or not
+    # 3. If it has, add person by POST /ISAPI/AccessControl/UserInfo/Record?format=json
+    request_url = "http://" + ipaddr + ":" + str(port) + "/ISAPI/AccessControl/UserInfo/capabilities?format=json"
+    response = requests.get(request_url, auth=auth)
+    res_json = json.loads(response.content)
+    opts = res_json["UserInfo"]["supportFunction"]["@opt"]
+    
+    if "put" in opts:
+        print("PUT option exists in supportFunction")
+        print("Try updating user")
+        body = generate_payload_adduser(user)
+        request_url = "http://" + ipaddr + ":" + str(port) + "/ISAPI/AccessControl/UserInfo/Modify?format=json"
+        response = requests.put(request_url, data=json.dumps(body), auth=auth)
         res_json = json.loads(response.content)
         return res_json
     else:
@@ -89,7 +110,9 @@ def isapi_accessctrl_deleteuser(ipaddr: str, port: int, auth, user):
     res_json = json.loads(response.content)
     opts = res_json["UserInfo"]["supportFunction"]["@opt"]
     if "delete" in opts:
-        body = generate_payload_deleteuser(user["employeeID"])
+        print("DELETE option exists in supportFunction")
+        print("Try deleting user")
+        body = generate_payload_deleteuser(user)
         request_url = "http://" + ipaddr + ":" + str(port) + "/ISAPI/AccessControl/UserInfo/Delete?format=json"
         response = requests.put(request_url, data=json.dumps(body), auth=auth)
         res_json = json.loads(response.content)
@@ -109,17 +132,17 @@ def get_value_from_key(keyname, tree):
             return value
     return None
 
-def generate_payload_adduser(employeeID: int, name: str, password: str, gender: str, user_type="normal"):
+def generate_payload_adduser(user, user_type="normal"):
     body = {
         "UserInfo":
             {
-                "employeeNo":str(employeeID),
-                "name": name,
+                "employeeNo":str(user["employeeID"]),
+                "name": user["name"],
                 "userType": user_type,
                 "Valid":{
-                    "enable": False,
-                    "beginTime":"2017-08-01T17:30:08",
-                    "endTime":"2022-08-01T17:30:08",
+                    "enable": user["valid"]["enable"] == "true",
+                    "beginTime": user["valid"]["beginTime"],
+                    "endTime": user["valid"]["endTime"],
                     "timeType":"local"
                     },
                 "doorRight": "1",
@@ -130,13 +153,13 @@ def generate_payload_adduser(employeeID: int, name: str, password: str, gender: 
                     }
                 ],
                 
-                "password":password,
-                "gender":gender
+                "password":user["password"],
+                "gender":user["gender"]
             }
         }
     return body
 
-def generate_payload_searchuser(employeeID: int):
+def generate_payload_searchuser(user):
     body = {
         "UserInfoSearchCond": {
             "searchID": "4",
@@ -144,19 +167,19 @@ def generate_payload_searchuser(employeeID: int):
             "maxResults": 32,
             "EmployeeNoList":[
                 {
-                    "employeeNo": str(employeeID)
+                    "employeeNo": str(user["employeeID"])
                 }
             ]
         }
     }
     return body
 
-def generate_payload_deleteuser(employeeID: int):
+def generate_payload_deleteuser(user):
     body = {
         "UserInfoDelCond": {                        
             "EmployeeNoList":[
                 {
-                    "employeeNo": str(employeeID)
+                    "employeeNo": str(user["employeeID"])
                 }
             ]
         }
@@ -169,18 +192,19 @@ if __name__ == '__main__':
     # Initialize parser
     parser = argparse.ArgumentParser()
     # Adding optional argument
-    parser.add_argument("-m", "--mode", help="count, search, add, delete", default="count")
+    parser.add_argument("-m", "--mode", help="count, search, add, update, delete", default="count")
     parser.add_argument("-c", "--cfg", help="JSON configuration file for access control", default="config.json")
     parser.add_argument("-u", "--user", help="JSON user file. contains employeeID, name, pwd, gender, time etc.", default="user.json")
 
     # Read arguments from command line
     args = parser.parse_args()
     f_cfg = open(args.cfg)
-    f_user = open(args.user)
+    if not args.mode == "count": 
+        f_user = open(args.user)
+        user = json.load(f_user) 
 
     # Authentication Setup
-    cfg = json.load(f_cfg) 
-    user = json.load(f_user) 
+    cfg = json.load(f_cfg)
     ipaddr = cfg["ip_address"]
     port = cfg["port_isapi"]
     admin_username = cfg["admin_user"]
@@ -226,6 +250,11 @@ if __name__ == '__main__':
         if args.mode == "add":
             print("\n\nAdding User")
             result =  isapi_accessctrl_adduser(ipaddr, port, auth, user)
+            print(result)
+        
+        if args.mode == "update":
+            print("\n\nUpdating User")
+            result =  isapi_accessctrl_updateuser(ipaddr, port, auth, user)
             print(result)
 
         if args.mode == "delete":

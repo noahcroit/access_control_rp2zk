@@ -2,5 +2,10 @@
 	"employeeID": 2,
 	"name": "test1",
 	"password": "12345678",
-	"gender": "female"
+	"gender": "male",
+    "valid": {
+        "enable": "true",
+        "beginTime": "2025-01-01T00:00:01",
+        "endTime": "2025-03-23T00:50:01"
+    } 
 }
