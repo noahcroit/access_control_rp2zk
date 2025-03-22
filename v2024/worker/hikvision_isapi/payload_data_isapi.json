@@ -1,0 +1,100 @@
+{
+    "UserInfo": {
+
+        "supportFunction": {
+            "@opt": "post,delete,put,get,setUp"
+        },
+        "UserInfoSearchCond": {
+            "searchID": {
+                "@min": 1,
+                "@max": 32
+            },
+            "maxResults": {
+                "@min": 1,
+                "@max": 10
+            },
+            "EmployeeNoList": {
+                "maxSize": 50,
+                "employeeNo": {
+                    "@min": 1,
+                    "@max": 32
+                }
+            }
+        },
+        "UserInfoDelCond": {
+            "EmployeeNoList": {
+                "maxSize": 50,
+                "employeeNo": {
+                    "@min": 1,
+                    "@max": 32
+                }
+            }
+        },
+        "employeeNo": {
+            "@min": 1,
+            "@max": 32
+        },
+        "name": {
+            "@min": 1,
+            "@max": 128
+        },
+        "userType": {
+            "@opt": "normal,visitor,blackList"
+        },
+        "closeDelayEnabled": "true,false",
+        "Valid": {
+            "enable": "true,false",
+            "beginTime": {
+                "@min": 1,
+                "@max": 32
+            },
+            "endTime": {
+                "@min": 1,
+                "@max": 32
+            },
+            "timeType": {
+                "@opt": "local,UTC"
+            }
+        },
+        "maxBelongGroup": 32,
+        "belongGroup": {
+            "@min": 1,
+            "@max": 32
+        },
+        "password": {
+            "@min": 1,
+            "@max": 8
+        },
+        "doorRight": {
+            "@min": 1,
+            "@max": 1
+        },
+        "RightPlan": {
+            "maxSize": 1,
+            "doorNo": {
+                "@min": 1,
+                "@max": 1
+            },
+            "maxPlanTemplate": 4,
+            "planTemplateNo": {
+                "@min": 1,
+                "@max": 255
+            }
+        },
+        "maxOpenDoorTime": {
+            "@min": 0,
+            "@max": 255
+        },
+        "openDoorTime": {
+            "@min": 0,
+            "@max": 255
+        },
+        "localUIRight": "true,false",
+        "userVerifyMode": {
+            "@opt": "fpOrCard,card,fp,cardAndPw,fpAndCard,fpAndPw,fpAndCardAndPw,cardOrFpOrPw"
+        },
+        "addUser": "true,false",
+        "maxRecordNum": 100000,
+        "purePwdVerifyEnable": true
+    }
+}
