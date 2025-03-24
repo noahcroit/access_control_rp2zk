@@ -1,0 +1,60 @@
+{
+    "mqtt_broker": "192.168.0.54",
+    "mqtt_port": "1883",
+    "mqtt_topics": [
+        "door1/isopened",
+        "door1/islocked",
+        "door1/lockctrl",
+        "door2/isopened",
+        "door2/islocked",
+        "door2/lockctrl"
+    ],
+    "keepalive": 180,
+    "redis_user": "",
+    "redis_pwd": "",
+    "devices": {
+        "door_meet2": {
+            "admin_user" : "",
+            "admin_password" : "",
+            "ipaddr": "192.168.8.103",
+            "port": 80,
+            "tagnames": {
+                "lock": "settag:access_control.door_meet2.lock",
+                "unlock": "settag:access_control.door_meet2.unlock",
+                "unlock_schedule": "settag:access_control.door_meet2.unlock_schedule",
+                "stop_schedule": "settag:access_control.door_meet2.stop_schedule",
+                "adduser": "settag:access_control.door_meet2.adduser",
+                "deluser": "settag:access_control.door_meet2.deluser"
+            }
+        },
+        "door_meet1": {
+            "admin_user" : "",
+            "admin_password" : "",
+            "ipaddr": "192.168.8.100",
+            "port": 80,
+            "tagnames": {
+                "lock": "settag:access_control.door_meet1.lock",
+                "unlock": "settag:access_control.door_meet1.unlock",
+                "unlock_schedule": "settag:access_control.door_meet1.unlock_schedule",
+                "stop_schedule": "settag:access_control.door_meet1.stop_schedule",
+                "adduser": "settag:access_control.door_meet1.adduser",
+                "deluser": "settag:access_control.door_meet1.deluser"
+            }
+        },
+        "door_main": {
+            "admin_user" : "",
+            "admin_password" : "",
+            "ipaddr": "192.168.8.101",
+            "port": 80,
+            "tagnames": {
+                "lock": "settag:access_control.door_main.lock",
+                "unlock": "settag:access_control.door_main.unlock",
+                "unlock_schedule": "settag:access_control.door_main.unlock_schedule",
+                "stop_schedule": "settag:access_control.door_main.stop_schedule",
+                "adduser": "settag:access_control.door_main.adduser",
+                "deluser": "settag:access_control.door_main.deluser"
+            }
+        }
+    }
+}
+
