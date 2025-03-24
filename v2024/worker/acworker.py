@@ -2,15 +2,56 @@ import sys
 import asyncio
 import async_timeout
 import aioredis
-import aiomqtt
-import requests
 import queue
 import argparse
 import json
 import logging
+#import aiomqtt
+from door import DSK1T105AM
+import time
+import datetime as DT
 
 
 
+def json_decode_from_backend(json_string, func="ls"):
+    data = json.loads(json_string)
+    if func == "ls":
+        pass
+    elif func == "add":
+        uid  = int(data["id"])
+        user = data["username"]
+        pwd  = data["password"]
+        valid_en = data["valid_enable"] == "true"
+        epoch_start = int(data["epoch_start"])
+        epoch_end = int(data["epoch_end"])
+        return uid, user, pwd, valid_en, epoch_start, epoch_end
+    elif func == "del":
+        uid  = int(data["id"])
+        user = data["username"]
+        return uid, user
+    elif func == "schedule":
+        days = data["days"]
+        tstart = data["start"]
+        tend = data["end"]
+        return days, tstart, tend
+    else:
+        return None
+
+
+
+def epoch2iso(epoch):
+    iso = DT.datetime.utcfromtimestamp(epoch).isoformat()
+    return iso
+
+def strtime2seconds(strtime):
+    h, m, s = strtime.split(":")
+    h = int(h)
+    m = int(m)
+    s = int(s)
+    seconds = s + 60*m + 3600*h
+    return seconds
+
+"""
 async def task_mqttsub():
     global cfg
     global q2client
@@ -43,91 +84,197 @@ async def task_mqttpub():
             logger.warning("task: mqtt publish will be stop")
             break
         await asyncio.sleep(1)
+"""
 
 
-
-async def task_redissub(channel: aioredis.client.PubSub):
-    global cfg
-    global q2device
+async def task_listen2backend(channel: aioredis.client.PubSub, taglist):
+    global q2accessctrl
     logger.info('Starting a REDIS sub for Reservation/Person Management at DS-K1T105AM')
+    # subscribe for listening to all tags
+    for tag in taglist:
+        await channel.subscribe(tag)
+    # listening loop
     while True:
         try:
             async with async_timeout.timeout(1):
                 message = await channel.get_message(ignore_subscribe_messages=True)
                 if message is not None:
-                    q2device.put(message['data'])
+                    logger.info('Incoming REDIS pub message')
+                    ch = message['channel'].decode('utf-8')
+                    tag_fullname = ch.split(':')[1]
+                    val = message['data'].decode('utf-8')
+                    print(tag_fullname, val)
+                    data=(tag_fullname, val)
+                    if q2accessctrl.full():
+                        discard = q2accessctrl.get()
+                    q2accessctrl.put(data)
                 await asyncio.sleep(0.1)
         except asyncio.TimeoutError:
-            pass
+            break
 
 
 
-async def task_redispub(redis, channel_pub):
-    global q2client
-    logger.info('Starting a REDIS pub for sending door status, list of users at DS-K1T105AM')
+async def task_send2backend(redis):
+    global q2backend
+    logger.info('Starting a REDIS pub for sending data to backend')
     while True:
-        if not q2client.empty():
-            txdata = q2client.get()
+        if not q2backend.empty():
+            channel_pub, txdata = q2backend.get()
             await redis.publish(channel_pub, txdata)
         await asyncio.sleep(1)
 
 
 
-async def main():
-    global cfg
-    # Initialize parser
-    parser = argparse.ArgumentParser()
-    # Adding optional argument
-    # Read arguments from command line
-    parser.add_argument("-j", "--json", help="JSON file for the configuration", default='config.json')
-    args = parser.parse_args()
+async def task_accessctrl(l_device):
+    global q2accessctrl
+    global q2backend
+    logger.info('Starting a access control tasks (DS-K1T105AM and pico failsecure)')
+    dict_scheduler = {} 
+    dict_device = {}
+    for name, device_info in l_device:
+        print(name)
+        print(device_info)  
+        d = DSK1T105AM(device_info["admin_user"],
+                            device_info["admin_password"],
+                            device_info["ipaddr"],
+                            device_info["port"]
+                            )
+        dict_device.update({name: d})
+    
+    while True:
+        if not q2accessctrl.empty():
+            logger.info('Read message from queue for AC devices')
+            tag_fullname, val = q2accessctrl.get()
+            system_name, device_name, tagname = tag_fullname.split('.')
+            print(system_name, device_name, tagname, val)
 
-    # Extract config data from .json
-    try:
-        f = open(args.json, 'rb')
-        cfg = json.load(f)
-        f.close()
-    except OSError:
-        logger.error('Configuration file does not exist!')
-        sys.exit()
+            if tagname == "lock":
+                print("lock requested!")
+                res = dict_device[device_name].isapi_doorctrl("close")
 
+            elif tagname == "unlock":
+                print("unlock requested!")
+                res = dict_device[device_name].isapi_doorctrl("open")
+
+            elif tagname == "unlock_schedule":
+                print("start unlock schedule requested!")
+                days, tstart, tend = json_decode_from_backend(val, func="schedule")
+                print(days, tstart, tend)
+                t_scheduler = asyncio.create_task(unlock_scheduler(days, tstart, tend, dict_device[device_name]))
+                dict_scheduler.update({device_name: t_scheduler})
+
+            elif tagname == "stop_schedule":
+                print("stop unlock schedule requested!")
+                dict_scheduler[device_name].cancel()
+                dict_device[device_name].isapi_doorctrl("close")
+
+            elif tagname == "adduser":
+                print("add user requested!")
+                uid, user, pwd, valid, tstart, tend = json_decode_from_backend(val, func="add")
+                tstart = epoch2iso(tstart)
+                tend = epoch2iso(tend)
+                print(tstart, tend)
+                if dict_device[device_name].isapi_searchUser(uid):
+                    dict_device[device_name].isapi_delUser(uid, user)
+                res = dict_device[device_name].isapi_addUser(uid, user, pwd, valid, tstart, tend)
+
+            elif tagname == "deluser":
+                print("delete user requested!")
+                uid, user = json_decode_from_backend(val, func="del")
+                if dict_device[device_name].isapi_searchUser(uid):
+                    res = dict_device[device_name].isapi_delUser(uid, user)
+
+        await asyncio.sleep(1)
+
+
+
+async def unlock_scheduler(days, startTime, endTime, device):
+    logger.info('Starting open scheduler')
+    device.isapi_doorctrl("close")
+    isopen=False
+    startSeconds = strtime2seconds(startTime)
+    endSeconds = strtime2seconds(endTime)
+    days_int = []
+    for day in days:
+        days_int.append(int(day))
+    while True:
+        day = DT.datetime.today().isoweekday()
+        if day in days_int:
+            currentTime = DT.datetime.now().strftime("%H:%M:%S")
+            currentSeconds = strtime2seconds(currentTime)
+            if (currentSeconds >= startSeconds) and (currentSeconds <= endSeconds): 
+                if not isopen:
+                    device.isapi_doorctrl("alwaysOpen")
+                    isopen=True
+            else:
+                if isopen:
+                    device.isapi_doorctrl("close")
+                    isopen=False
+            await asyncio.sleep(5)
+        else:
+            await asyncio.sleep(60)
+
+
+
+
+async def main(cfg):
     # REDIS initialization
     logger.info('REDIS client initialize')
-    redis = aioredis.from_url("redis://localhost")
+    redis = aioredis.from_url("redis://192.168.8.104", password=cfg["redis_pwd"])
     pubsub = redis.pubsub()
-    await pubsub.subscribe('ch:from_client')
     logger.info('REDIS OK')
 
+    print("List of devices and tags")
+    l_tag = []
+    l_device = []
+    for device, device_info in cfg["devices"].items():
+        print(device)
+        l_device.append((device, device_info))
+        for key, tag in device_info["tagnames"].items():
+            l_tag.append(tag)
+            print(tag)
+    
     # create task(s)
-    t_rsub = asyncio.create_task(task_redissub(pubsub))
-    t_rpub = asyncio.create_task(task_redispub(redis, 'ch:from_device'))
-    t_mqttsub = asyncio.create_task(task_mqttsub())
-    t_mqttpub = asyncio.create_task(task_mqttpub())
+    t1 = asyncio.create_task(task_listen2backend(pubsub, l_tag))
+    t2 = asyncio.create_task(task_send2backend(redis))
+    t3 = asyncio.create_task(task_accessctrl(l_device))
 
     # main loop
     while True:
         logger.info('Checking the status of all tasks')
         await asyncio.sleep(1)
         # check tasks
-        if t_rsub.done():
-            logger.info('Restart a task_redissub')
-            t_rsub = asyncio.create_task(task_redissub(pubsub))
-        if t_rpub.done():
-            logger.info('Restart a task_redispub')
-            t_rpub = asyncio.create_task(task_redispub(redis, 'ch:from_device'))
-        if t_mqttsub.done():
-            logger.info('Restart a task_mqttsub')
-            t_mqttsub = asyncio.create_task(task_mqttsub())
-        if t_mqttpub.done():
-            logger.info('Restart a task_mqttpub')
-            t_mqttpub = asyncio.create_task(task_mqttpub())
+        if t1.done():
+            logger.info('Restart a task_listen')
+            t1 = asyncio.create_task(task_listen2backend(pubsub, l_tag))
+        if t2.done():
+            logger.info('Restart a task_send')
+            t2 = asyncio.create_task(task_send2backend(redis))
+        if t3.done():
+            logger.info('Restart a task_accessctrl')
+            t3 = asyncio.create_task(task_accessctrl(l_device))
 
 
 
 if __name__ == '__main__':
-    cfg = None
-    q2client = queue.Queue(maxsize=256)
-    q2device = queue.Queue(maxsize=256)
+    # Initialize parser
+    parser = argparse.ArgumentParser()
+    # Adding optional argument
+    # Read arguments from command line
+    parser.add_argument("-c", "--cfg", help="JSON file for the configuration file of all devices", default='config.json')
+    args = parser.parse_args()
+
+    # Extract config data from .json
+    try:
+        f = open(args.cfg, 'rb')
+        cfg = json.load(f)
+        f.close()
+    except OSError:
+        logger.error('Configuration file does not exist!')
+        sys.exit()
+
+    q2accessctrl = queue.Queue(maxsize=256)
+    q2backend = queue.Queue(maxsize=256)
 
     # setup logging system
     logger = logging.getLogger(__name__)
@@ -140,4 +287,4 @@ if __name__ == '__main__':
 
     # run main program
     logger.info('Starting an access control worker')
-    asyncio.run(main())
+    asyncio.run(main(cfg))
