@@ -2,11 +2,14 @@ import json
 import xml.etree.ElementTree as ET 
 import xmltodict
 import requests
+import threading
+import time
 
 
 
 class DSK1T105AM():
-    def __init__(self, user, password, ipaddr, port):
+    def __init__(self, name, user, password, ipaddr, port):
+        self.name = name
         self.admin_user = user
         self.admin_password = password
         self.ipaddr = ipaddr
@@ -151,48 +154,52 @@ class DSK1T105AM():
 
     def isDoorLock(self):
         pass
-    
-    """
-    async def room_reserve(self, epoch_start, epoch_end, room_pwd="1234"):
-        #print("Unlock start at ", epoch_start, ", end at", epoch_end)
-        logging.info("Unlock start at ", epoch_start, ", end at", epoch_end)
-        # read epoch time
-        diff = epoch_end - epoch_start
-        time_current = int(time.time())
-        # do nothing until epoch_start
-        if time_current <= epoch_start:
-            while time_current < epoch_start:
-                await asyncio.sleep(3)
-                time_current = int(time.time())
-            # create temporary user for attendance within period of time, and delete user
-            #print("Create temporary user for ", diff, "sec")
-            logging.info("Create temporary user for ", diff, "sec")
-            self.addUser(name="reserve", userid="100", pwd=room_pwd, userlevel=zk_const.USER_DEFAULT)
-            # reserve method
-            # "always unlock" or "only add user"
-            await self.unlock_delay(duration_sec=diff)
-            #await asyncio.sleep(diff)
-            self.delUser(userid="100")
-        else:
-            #print("reserved start time has been passed")
-            logging.info("reserved start time has been passed")
-    """
-    """
-    def redisJsonLoad(self, json_string, func="ls"):
-        data = json.loads(json_string)
-        if func == "ls":
-            pass
-        elif func == "add":
-            uid  = data["id"]
-            user = data["username"]
-            pwd  = data["password"]
-            return uid, user, pwd
-        elif func == "del":
-            uid  = data["id"]
-            user = data["username"]
-            return uid, user
-        elif func == "reserve":
-            epoch_start = int(data["epoch_start"])
-            epoch_end = int(data["epoch_end"])
-            return epoch_start, epoch_end
-    """
+   
+    def start_listen2event(self, cb):
+        self.task_event = threading.Thread(target=self._listen2event, args=(cb,))
+        self.task_event.start()
+
+    def _listen2event(self, cb):
+        auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
+        request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/Event/notification/alertStream"
+        r = requests.get(request_url, stream=True, auth=auth)
+        r.raise_for_status()
+
+        in_header = False             # are we parsing headers at the moment
+        grabbing_response = False     # are we grabbing the response at the moment
+        response_size = 0             # the response size that we take from Content-Length
+        response_buffer = b""         # where we keep the reponse bytes
+
+        for line in r.iter_lines():
+            decoded = ""
+            try:
+                decoded = line.decode("utf-8")
+            except:
+                # image bytes here ignore them
+                continue
+            
+            if decoded == "--boundary":                
+                in_header = True
+
+            if in_header:
+                if decoded.startswith("Content-Length"):
+                    decoded.replace(" ", "")
+                    content_length = decoded.split(":")[1]
+                    response_size = int(content_length)
+
+                if decoded == "":
+                    in_header = False
+                    grabbing_response = True
+
+            elif grabbing_response:
+                response_buffer += line
+
+                if len(response_buffer) != response_size:
+                    response_buffer += b"\n"
+                else:
+                    # time to convert it json and return it
+                    grabbing_response = False
+                    dic = json.loads(response_buffer)
+                    response_buffer = b"" 
+                    cb(dic, self.name)
+ 

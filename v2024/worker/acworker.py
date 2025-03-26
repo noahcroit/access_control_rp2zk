@@ -51,6 +51,25 @@ def strtime2seconds(strtime):
     seconds = s + 60*m + 3600*h
     return seconds
 
+def event_cb(event, device_name):
+    global q2backend
+    logger.info("Event incoming from device:%s", device_name)
+    print(event)
+    event_type = event["eventType"]
+    data = {}
+    if event_type == "AccessControllerEvent":
+        if event["AccessControllerEvent"]["majorEventType"] == 5 and event["AccessControllerEvent"]["subEventType"] == 1:
+            data.update({"card_id" : event["AccessControllerEvent"]["cardNo"]})
+            data.update({"access_id" : event["AccessControllerEvent"]["employeeNoString"]})
+    timestamp = event["dateTime"]
+    d = {}
+    d.update({"event_type" : event_type})
+    d.update({"device" : device_name})
+    d.update({"data" : data})
+    d.update({"timestamp" : timestamp})
+    if q2backend.full():
+        discard = q2backend.get()
+    q2backend.put(d)
 """
 async def task_mqttsub():
     global cfg
@@ -119,9 +138,11 @@ async def task_send2backend(redis):
     logger.info('Starting a REDIS pub for sending data to backend')
     while True:
         if not q2backend.empty():
-            channel_pub, txdata = q2backend.get()
-            await redis.publish(channel_pub, txdata)
-        await asyncio.sleep(1)
+            d = q2backend.get()
+            txdata = json.dumps(d)
+            ch = "tag:access_control." + d["device"] + ".event"
+            await redis.publish(ch, txdata)
+        await asyncio.sleep(0.1)
 
 
 
@@ -134,12 +155,14 @@ async def task_accessctrl(l_device):
     for name, device_info in l_device:
         print(name)
         print(device_info)  
-        d = DSK1T105AM(device_info["admin_user"],
-                            device_info["admin_password"],
-                            device_info["ipaddr"],
-                            device_info["port"]
-                            )
+        d = DSK1T105AM(name, 
+                        device_info["admin_user"],
+                        device_info["admin_password"],
+                        device_info["ipaddr"],
+                        device_info["port"]
+                    )
         dict_device.update({name: d})
+        d.start_listen2event(event_cb)
     while True:
         if not q2accessctrl.empty():
             logger.info('Read message from queue for AC devices')
