@@ -140,7 +140,6 @@ async def task_accessctrl(l_device):
                             device_info["port"]
                             )
         dict_device.update({name: d})
-    
     while True:
         if not q2accessctrl.empty():
             logger.info('Read message from queue for AC devices')
@@ -151,23 +150,22 @@ async def task_accessctrl(l_device):
             if tagname == "lock":
                 print("lock requested!")
                 res = dict_device[device_name].isapi_doorctrl("close")
-
+            elif tagname == "always_lock":
+                print("lock requested!")
+                res = dict_device[device_name].isapi_doorctrl("alwaysClose")
             elif tagname == "unlock":
                 print("unlock requested!")
                 res = dict_device[device_name].isapi_doorctrl("open")
-
             elif tagname == "unlock_schedule":
                 print("start unlock schedule requested!")
                 days, tstart, tend = json_decode_from_backend(val, func="schedule")
                 print(days, tstart, tend)
                 t_scheduler = asyncio.create_task(unlock_scheduler(days, tstart, tend, dict_device[device_name]))
                 dict_scheduler.update({device_name: t_scheduler})
-
             elif tagname == "stop_schedule":
                 print("stop unlock schedule requested!")
                 dict_scheduler[device_name].cancel()
                 dict_device[device_name].isapi_doorctrl("close")
-
             elif tagname == "adduser":
                 print("add user requested!")
                 uid, user, pwd, valid, tstart, tend = json_decode_from_backend(val, func="add")
@@ -177,13 +175,11 @@ async def task_accessctrl(l_device):
                 if dict_device[device_name].isapi_searchUser(uid):
                     dict_device[device_name].isapi_delUser(uid, user)
                 res = dict_device[device_name].isapi_addUser(uid, user, pwd, valid, tstart, tend)
-
             elif tagname == "deluser":
                 print("delete user requested!")
                 uid, user = json_decode_from_backend(val, func="del")
                 if dict_device[device_name].isapi_searchUser(uid):
                     res = dict_device[device_name].isapi_delUser(uid, user)
-
         await asyncio.sleep(1)
 
 
@@ -204,7 +200,7 @@ async def unlock_scheduler(days, startTime, endTime, device):
             currentSeconds = strtime2seconds(currentTime)
             if (currentSeconds >= startSeconds) and (currentSeconds <= endSeconds): 
                 if not isopen:
-                    device.isapi_doorctrl("alwaysOpen")
+                    device.isapi_doorctrl("open")
                     isopen=True
             else:
                 if isopen:
@@ -220,7 +216,7 @@ async def unlock_scheduler(days, startTime, endTime, device):
 async def main(cfg):
     # REDIS initialization
     logger.info('REDIS client initialize')
-    redis = aioredis.from_url("redis://192.168.8.104", password=cfg["redis_pwd"])
+    redis = aioredis.from_url(cfg["redis_url"], password=cfg["redis_pwd"])
     pubsub = redis.pubsub()
     logger.info('REDIS OK')
 

@@ -10,6 +10,7 @@
         "door2/lockctrl"
     ],
     "keepalive": 180,
+    "redis_url": "",
     "redis_user": "",
     "redis_pwd": "",
     "devices": {
@@ -20,11 +21,14 @@
             "port": 80,
             "tagnames": {
                 "lock": "settag:access_control.door_meet2.lock",
+                "always_lock": "settag:access_control.door_meet2.always_lock",
                 "unlock": "settag:access_control.door_meet2.unlock",
+                "always_unlock": "settag:access_control.door_meet2.always_unlock",
                 "unlock_schedule": "settag:access_control.door_meet2.unlock_schedule",
                 "stop_schedule": "settag:access_control.door_meet2.stop_schedule",
                 "adduser": "settag:access_control.door_meet2.adduser",
-                "deluser": "settag:access_control.door_meet2.deluser"
+                "deluser": "settag:access_control.door_meet2.deluser",
+                "event": "settag:access_control.door_meet2.event"
             }
         },
         "door_meet1": {
@@ -34,11 +38,14 @@
             "port": 80,
             "tagnames": {
                 "lock": "settag:access_control.door_meet1.lock",
+                "always_lock": "settag:access_control.door_meet1.always_lock",
                 "unlock": "settag:access_control.door_meet1.unlock",
+                "always_unlock": "settag:access_control.door_meet1.always_unlock",
                 "unlock_schedule": "settag:access_control.door_meet1.unlock_schedule",
                 "stop_schedule": "settag:access_control.door_meet1.stop_schedule",
                 "adduser": "settag:access_control.door_meet1.adduser",
-                "deluser": "settag:access_control.door_meet1.deluser"
+                "deluser": "settag:access_control.door_meet1.deluser",
+                "event": "settag:access_control.door_meet1.event"
             }
         },
         "door_main": {
@@ -48,11 +55,14 @@
             "port": 80,
             "tagnames": {
                 "lock": "settag:access_control.door_main.lock",
+                "always_lock": "settag:access_control.door_main.always_lock",
                 "unlock": "settag:access_control.door_main.unlock",
+                "always_unlock": "settag:access_control.door_main.always_unlock",
                 "unlock_schedule": "settag:access_control.door_main.unlock_schedule",
                 "stop_schedule": "settag:access_control.door_main.stop_schedule",
                 "adduser": "settag:access_control.door_main.adduser",
-                "deluser": "settag:access_control.door_main.deluser"
+                "deluser": "settag:access_control.door_main.deluser",
+                "event": "settag:access_control.door_main.event"
             }
         }
     }
