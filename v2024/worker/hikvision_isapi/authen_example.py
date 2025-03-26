@@ -39,4 +39,3 @@ if __name__ == "__main__":
     # Output response content
     print(response)
     print(response.text)
-    print(response.content)
