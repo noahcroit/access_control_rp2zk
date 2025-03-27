@@ -160,46 +160,47 @@ class DSK1T105AM():
         self.task_event.start()
 
     def _listen2event(self, cb):
-        auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
-        request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/Event/notification/alertStream"
-        r = requests.get(request_url, stream=True, auth=auth)
-        r.raise_for_status()
+        while True:
+            auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
+            request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/Event/notification/alertStream"
+            r = requests.get(request_url, stream=True, auth=auth)
+            r.raise_for_status()
 
-        in_header = False             # are we parsing headers at the moment
-        grabbing_response = False     # are we grabbing the response at the moment
-        response_size = 0             # the response size that we take from Content-Length
-        response_buffer = b""         # where we keep the reponse bytes
+            in_header = False             # are we parsing headers at the moment
+            grabbing_response = False     # are we grabbing the response at the moment
+            response_size = 0             # the response size that we take from Content-Length
+            response_buffer = b""         # where we keep the reponse bytes
 
-        for line in r.iter_lines():
-            decoded = ""
-            try:
-                decoded = line.decode("utf-8")
-            except:
-                # image bytes here ignore them
-                continue
-            
-            if decoded == "--boundary":                
-                in_header = True
+            for line in r.iter_lines():
+                decoded = ""
+                try:
+                    decoded = line.decode("utf-8")
+                except:
+                    # image bytes here ignore them
+                    continue
+                
+                if decoded == "--boundary":                
+                    in_header = True
 
-            if in_header:
-                if decoded.startswith("Content-Length"):
-                    decoded.replace(" ", "")
-                    content_length = decoded.split(":")[1]
-                    response_size = int(content_length)
+                if in_header:
+                    if decoded.startswith("Content-Length"):
+                        decoded.replace(" ", "")
+                        content_length = decoded.split(":")[1]
+                        response_size = int(content_length)
 
-                if decoded == "":
-                    in_header = False
-                    grabbing_response = True
+                    if decoded == "":
+                        in_header = False
+                        grabbing_response = True
 
-            elif grabbing_response:
-                response_buffer += line
+                elif grabbing_response:
+                    response_buffer += line
 
-                if len(response_buffer) != response_size:
-                    response_buffer += b"\n"
-                else:
-                    # time to convert it json and return it
-                    grabbing_response = False
-                    dic = json.loads(response_buffer)
-                    response_buffer = b"" 
-                    cb(dic, self.name)
- 
+                    if len(response_buffer) != response_size:
+                        response_buffer += b"\n"
+                    else:
+                        # time to convert it json and return it
+                        grabbing_response = False
+                        dic = json.loads(response_buffer)
+                        response_buffer = b"" 
+                        cb(dic, self.name)
+     
