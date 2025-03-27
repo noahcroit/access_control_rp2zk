@@ -58,18 +58,22 @@ def event_cb(event, device_name):
     event_type = event["eventType"]
     data = {}
     try:
-        if event_type == "AccessControllerEvent":
-            data.update({"card_id" : event["AccessControllerEvent"]["cardNo"]})
-            data.update({"access_id" : event["AccessControllerEvent"]["employeeNoString"]})
-            timestamp = event["dateTime"]
-            d = {}
-            d.update({"event_type" : event_type})
-            d.update({"device" : device_name})
-            d.update({"data" : data})
-            d.update({"timestamp" : timestamp})
-            if q2backend.full():
-                discard = q2backend.get()
-            q2backend.put(d)
+        if event_type == "AccessControllerEvent" and "cardNo" in event:
+            card_id = event["AccessControllerEvent"]["cardNo"]
+            if not card_id == "":
+                data.update({"card_id" : event["AccessControllerEvent"]["cardNo"]})
+                data.update({"access_id" : event["AccessControllerEvent"]["employeeNoString"]})
+                timestamp = event["dateTime"]
+                d = {}
+                d.update({"event_type" : event_type})
+                d.update({"device" : device_name})
+                d.update({"data" : data})
+                d.update({"timestamp" : timestamp})
+                if q2backend.full():
+                    discard = q2backend.get()
+                q2backend.put(d)
+            else:
+                logger.warning("An event with empty Card ID")
     except:
         pass
 """
@@ -124,7 +128,6 @@ async def task_listen2backend(channel: aioredis.client.PubSub, taglist):
                     ch = message['channel'].decode('utf-8')
                     tag_fullname = ch.split(':')[1]
                     val = message['data'].decode('utf-8')
-                    print(tag_fullname, val)
                     data=(tag_fullname, val)
                     if q2accessctrl.full():
                         discard = q2accessctrl.get()
@@ -142,8 +145,8 @@ async def task_send2backend(redis):
         if not q2backend.empty():
             d = q2backend.get()
             txdata = json.dumps(d)
-            print(txdata)
             ch = "tag:access_control." + d["device"] + ".event"
+            logger.info("Publish tag value to REDIS")
             await redis.publish(ch, txdata)
         await asyncio.sleep(0.1)
 
@@ -206,7 +209,7 @@ async def task_accessctrl(l_device):
                 uid, user = json_decode_from_backend(val, func="del")
                 if dict_device[device_name].isapi_searchUser(uid):
                     res = dict_device[device_name].isapi_delUser(uid, user)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
 
 
 
