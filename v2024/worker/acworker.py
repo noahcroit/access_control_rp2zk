@@ -51,31 +51,6 @@ def strtime2seconds(strtime):
     seconds = s + 60*m + 3600*h
     return seconds
 
-def event_cb(event, device_name):
-    global q2backend
-    logger.info("Event incoming from device:%s", device_name)
-    print(event)
-    event_type = event["eventType"]
-    data = {}
-    try:
-        if event_type == "AccessControllerEvent" and "cardNo" in event:
-            card_id = event["AccessControllerEvent"]["cardNo"]
-            if not card_id == "":
-                data.update({"card_id" : event["AccessControllerEvent"]["cardNo"]})
-                data.update({"access_id" : event["AccessControllerEvent"]["employeeNoString"]})
-                timestamp = event["dateTime"]
-                d = {}
-                d.update({"event_type" : event_type})
-                d.update({"device" : device_name})
-                d.update({"data" : data})
-                d.update({"timestamp" : timestamp})
-                if q2backend.full():
-                    discard = q2backend.get()
-                q2backend.put(d)
-            else:
-                logger.warning("An event with empty Card ID")
-    except:
-        pass
 """
 async def task_mqttsub():
     global cfg
@@ -145,9 +120,11 @@ async def task_send2backend(redis):
         if not q2backend.empty():
             d = q2backend.get()
             txdata = json.dumps(d)
+            """
             ch = "tag:access_control." + d["device"] + ".event"
             logger.info("Publish tag value to REDIS")
             await redis.publish(ch, txdata)
+            """
         await asyncio.sleep(0.1)
 
 
@@ -167,7 +144,7 @@ async def task_accessctrl(l_device):
                         device_info["ipaddr"],
                         device_info["port"]
                     )
-        d.start_listen2event(event_cb)
+        d.start_listen2event()
         dict_device.update({name: d})
     while True:
         if not q2accessctrl.empty():
@@ -180,11 +157,14 @@ async def task_accessctrl(l_device):
                 print("lock requested!")
                 res = dict_device[device_name].isapi_doorctrl("close")
             elif tagname == "always_lock":
-                print("lock requested!")
+                print("always lock requested!")
                 res = dict_device[device_name].isapi_doorctrl("alwaysClose")
             elif tagname == "unlock":
                 print("unlock requested!")
                 res = dict_device[device_name].isapi_doorctrl("open")
+            elif tagname == "always_unlock":
+                print("always unlock requested!")
+                res = dict_device[device_name].isapi_doorctrl("alwaysOpen")
             elif tagname == "unlock_schedule":
                 print("start unlock schedule requested!")
                 days, tstart, tend = json_decode_from_backend(val, func="schedule")
@@ -261,7 +241,7 @@ async def main(cfg):
     
     # create task(s)
     t1 = asyncio.create_task(task_listen2backend(pubsub, l_tag))
-    t2 = asyncio.create_task(task_send2backend(redis))
+    #t2 = asyncio.create_task(task_send2backend(redis))
     t3 = asyncio.create_task(task_accessctrl(l_device))
 
     # main loop
@@ -272,9 +252,9 @@ async def main(cfg):
         if t1.done():
             logger.info('Restart a task_listen')
             t1 = asyncio.create_task(task_listen2backend(pubsub, l_tag))
-        if t2.done():
-            logger.info('Restart a task_send')
-            t2 = asyncio.create_task(task_send2backend(redis))
+    #    if t2.done():
+    #        logger.info('Restart a task_send')
+    #        t2 = asyncio.create_task(task_send2backend(redis))
         if t3.done():
             logger.info('Restart a task_accessctrl')
             t3 = asyncio.create_task(task_accessctrl(l_device))

@@ -4,6 +4,7 @@ import xmltodict
 import requests
 import threading
 import time
+import redis
 
 
 
@@ -15,7 +16,8 @@ class DSK1T105AM():
         self.ipaddr = ipaddr
         self.port = port
         self.doorstate = None
-        # generate authentication
+        # REDIS for event (non-async)
+        self.pub = redis.Redis(host='localhost', port=6379, password="ictadmin")
     
     @staticmethod
     def _generate_http_digest_authen(username: str, password: str):
@@ -102,7 +104,6 @@ class DSK1T105AM():
         request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/System/deviceInfo"
         response = requests.get(request_url, auth=auth)
         return response
-        
     
     def isapi_doorctrl(self, cmd: str):
         if cmd in ["open", "close", "alwaysOpen", "alwaysClose"]:
@@ -155,53 +156,83 @@ class DSK1T105AM():
     def isDoorLock(self):
         pass
    
-    def start_listen2event(self, cb):
-        self.task_event = threading.Thread(target=self._listen2event, args=(cb,))
+    def start_listen2event(self):
+        self.task_event = threading.Thread(target=self._listen2event, args=())
         self.task_event.start()
 
-    def _listen2event(self, cb):
+    def _listen2event(self):
         request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/Event/notification/alertStream"
         while True:
-            auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
-            r = requests.get(request_url, stream=True, auth=auth)
-            r.raise_for_status()
-            
-            try:
-                in_header = False             # are we parsing headers at the moment
-                grabbing_response = False     # are we grabbing the response at the moment
-                response_size = 0             # the response size that we take from Content-Length
-                response_buffer = b""         # where we keep the reponse bytes
+            with requests.Session() as s:
+                auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
+                r = s.get(request_url, stream=True, auth=auth)
+                r.raise_for_status()
+                
+                try:
+                    in_header = False             # are we parsing headers at the moment
+                    grabbing_response = False     # are we grabbing the response at the moment
+                    response_size = 0             # the response size that we take from Content-Length
+                    response_buffer = b""         # where we keep the reponse bytes
 
-                for line in r.iter_lines():
-                    decoded = ""
-                    try:
-                        decoded = line.decode("utf-8")
-                    except:
-                        # image bytes here ignore them
-                        continue
-                    
-                    if decoded == "--boundary":                
-                        in_header = True
+                    for line in r.iter_lines():
+                        decoded = ""
+                        try:
+                            decoded = line.decode("utf-8")
+                        except:
+                            # image bytes here ignore them
+                            continue
+                        
+                        if decoded == "--boundary":                
+                            in_header = True
 
-                    if in_header:
-                        if decoded.startswith("Content-Length"):
-                            decoded.replace(" ", "")
-                            content_length = decoded.split(":")[1]
-                            response_size = int(content_length)
+                        if in_header:
+                            if decoded.startswith("Content-Length"):
+                                decoded.replace(" ", "")
+                                content_length = decoded.split(":")[1]
+                                response_size = int(content_length)
 
-                        if decoded == "":
-                            in_header = False
-                            grabbing_response = True
+                            if decoded == "":
+                                in_header = False
+                                grabbing_response = True
 
-                    elif grabbing_response:
-                        response_buffer += line
+                        elif grabbing_response:
+                            response_buffer += line
 
-                        if len(response_buffer) != response_size:
-                            response_buffer += b"\n"
-                        else:
-                            # time to convert it json and return it
-                            grabbing_response = False
-                            dic = json.loads(response_buffer)
-                            response_buffer = b"" 
-                            cb(dic, self.name)
-            except:  
+                            if len(response_buffer) != response_size:
+                                response_buffer += b"\n"
+                            else:
+                                # time to convert it json and return it
+                                grabbing_response = False
+                                event_msg = json.loads(response_buffer)
+                                self._publish_event(event_msg)
+                                response_buffer = b""
+                except:
+                    continue
+
+    def _publish_event(self, event):
+        print("Event incoming from device:", self.name)
+        print(event)
+        event_type = event["eventType"]
+        data = {}
+        
+        try:
+            if event_type == "AccessControllerEvent":
+                card_id = event["AccessControllerEvent"]["cardNo"]
+                if not card_id == "":
+                    data.update({"card_id" : event["AccessControllerEvent"]["cardNo"]})
+                    data.update({"access_id" : event["AccessControllerEvent"]["employeeNoString"]})
+                    timestamp = event["dateTime"]
+                    d = {}
+                    d.update({"event_type" : event_type})
+                    d.update({"device" : self.name})
+                    d.update({"data" : data})
+                    d.update({"timestamp" : timestamp})
+                    ch = "tag:access_control." + self.name + ".event"
+                    print("ch:", ch)
+                    message = json.dumps(d)
+                    self.pub.publish(ch, message)
+                else:
+                    print("An event with empty Card ID")
+        except Exception as e:
+            print(e)
+        
