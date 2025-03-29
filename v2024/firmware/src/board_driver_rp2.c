@@ -23,11 +23,13 @@ void driver_rp2_sysinit() {
     stdio_init_all();
 
     // setup clock speed
+    /*
     clock_configure(clk_ref,
                     0,
                     0,
-                    12 * MHZ,
-                    12 * MHZ);
+                    100 * MHZ,
+                    100 * MHZ);
+    */
 }
 
 void driver_rp2_set_gpio_input(uint8_t gpio_num, bool use_interrupt) {
