@@ -26,7 +26,7 @@ void app_dsk4t100_unlock(app_dsk4t100_t *dev) {
 }
 
 bool app_dsk4t100_is_open(app_dsk4t100_t *dev) {
-    return !(dev->driver_read_gpio(dev->gpio_num_doorstatus));
+    return dev->driver_read_gpio(dev->gpio_num_doorstatus);
 }
 
 bool app_dsk4t100_is_actual_lock(app_dsk4t100_t *dev) {
