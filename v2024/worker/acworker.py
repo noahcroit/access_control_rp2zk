@@ -213,7 +213,6 @@ async def task_accessctrl(l_device):
 async def unlock_scheduler(days, startTime, endTime, device):
     logger.info('Starting open scheduler')
     device.isapi_doorctrl("close")
-    device.islocked = True
     startSeconds = strtime2seconds(startTime)
     endSeconds = strtime2seconds(endTime)
     days_int = []
@@ -231,8 +230,6 @@ async def unlock_scheduler(days, startTime, endTime, device):
             else:
                 if not device.islocked:
                     device.isapi_doorctrl("close")
-                    logger.info("Scheduler Finished")
-                    break
         else:
             await asyncio.sleep(60)
 

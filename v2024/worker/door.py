@@ -181,7 +181,7 @@ class DSK1T105AM():
                     response_size = 0             # the response size that we take from Content-Length
                     response_buffer = b""         # where we keep the reponse bytes
 
-                    for line in r.iter_lines():
+                    for line in r.iter_lines(chunk_size=620):
                         decoded = ""
                         try:
                             decoded = line.decode("utf-8")
