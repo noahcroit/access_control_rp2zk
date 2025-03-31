@@ -1,5 +1,5 @@
 {
-    "mqtt_broker": "192.168.0.54",
+    "mqtt_broker": "192.168.8.104",
     "mqtt_port": "1883",
     "mqtt_topics": [
         "door1/isopened",
@@ -28,7 +28,8 @@
                 "stop_schedule": "settag:access_control.door_meet2.stop_schedule",
                 "adduser": "settag:access_control.door_meet2.adduser",
                 "deluser": "settag:access_control.door_meet2.deluser",
-                "event": "settag:access_control.door_meet2.event"
+                "event": "settag:access_control.door_meet2.event",
+                "islocked": "tag:access_control.door_meeet2.islocked"
             }
         },
         "door_meet1": {
@@ -45,7 +46,8 @@
                 "stop_schedule": "settag:access_control.door_meet1.stop_schedule",
                 "adduser": "settag:access_control.door_meet1.adduser",
                 "deluser": "settag:access_control.door_meet1.deluser",
-                "event": "settag:access_control.door_meet1.event"
+                "event": "settag:access_control.door_meet1.event",
+                "islocked": "tag:access_control.door_meeet1.islocked"
             }
         },
         "door_main": {
@@ -62,9 +64,28 @@
                 "stop_schedule": "settag:access_control.door_main.stop_schedule",
                 "adduser": "settag:access_control.door_main.adduser",
                 "deluser": "settag:access_control.door_main.deluser",
-                "event": "settag:access_control.door_main.event"
+                "event": "settag:access_control.door_main.event",
+                "islocked": "tag:access_control.door_office.islocked"
             }
-        }
+        },
+        "door_office": {
+            "admin_user" : "",
+            "admin_password" : "",
+            "ipaddr": "192.168.8.102",
+            "port": 80,
+            "tagnames": {
+                "lock": "settag:access_control.door_office.lock",
+                "always_lock": "settag:access_control.door_office.always_lock",
+                "unlock": "settag:access_control.door_office.unlock",
+                "always_unlock": "settag:access_control.door_office.always_unlock",
+                "unlock_schedule": "settag:access_control.door_office.unlock_schedule",
+                "stop_schedule": "settag:access_control.door_office.stop_schedule",
+                "adduser": "settag:access_control.door_office.adduser",
+                "deluser": "settag:access_control.door_office.deluser",
+                "event": "tag:access_control.door_office.event",
+                "islocked": "tag:access_control.door_office.islocked"
+            }
+	}
     }
 }
 

@@ -92,7 +92,12 @@ async def task_listen2backend(channel: aioredis.client.PubSub, taglist):
     logger.info('Starting a REDIS sub for Reservation/Person Management at DS-K1T105AM')
     # subscribe for listening to all tags
     for tag in taglist:
-        await channel.subscribe(tag)
+        prefix, t = tag.split(":")
+        if prefix == "settag":
+            await channel.subscribe(tag)
+        else:
+            print("{} is not a sub tag".format(tag))
+
     # listening loop
     while True:
         try:
@@ -121,8 +126,8 @@ async def task_send2backend(redis):
             # for islocked only, if there are more type of message (JSON etc), json.dump is needed
             d = q2backend.get()
             ch, txdata = d
-            #logger.info("Publish tag value to REDIS")
-            #logger.info("tag : %s, value : %s", ch, txdata)
+            logger.info("Publish tag value to REDIS")
+            logger.info("tag : %s, value : %s", ch, txdata)
             await redis.publish(ch, txdata)
         await asyncio.sleep(0.1)
 
@@ -131,9 +136,10 @@ async def task_send2backend(redis):
 async def task_accessctrl(l_device):
     global q2accessctrl
     global q2backend
-    logger.info('Starting a access control tasks (DS-K1T105AM and pico failsecure)')
     dict_scheduler = {} 
     dict_device = {}
+    tick = 0
+    logger.info('Starting a access control tasks (DS-K1T105AM and pico failsecure)')
     for name, device_info in l_device:
         print(name)
         print(device_info)  
@@ -146,14 +152,17 @@ async def task_accessctrl(l_device):
         d.start_listen2event()
         dict_device.update({name: d})
     while True:
-        for device_name in dict_device:
-            val = str(dict_device[device_name].islocked)
-            tag_fullname = "tag:access_control." + device_name + ".islocked"
-            data=(tag_fullname, val)
-            if q2backend.full():
-                discard = q2backend.get()
-            q2backend.put(data)
+        # For islock monitoring
+        if tick % 5 == 0:
+            for device_name in dict_device:
+                val = str(dict_device[device_name].islocked)
+                tag_fullname = "tag:access_control." + device_name + ".islocked"
+                data=(tag_fullname, val)
+                if q2backend.full():
+                    discard = q2backend.get()
+                q2backend.put(data)
 
+        # For settag from backend
         if not q2accessctrl.empty():
             logger.info('Read message from queue for AC devices')
             tag_fullname, val = q2accessctrl.get()
@@ -196,14 +205,14 @@ async def task_accessctrl(l_device):
                 uid, user = json_decode_from_backend(val, func="del")
                 if dict_device[device_name].isapi_searchUser(uid):
                     res = dict_device[device_name].isapi_delUser(uid, user)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
+        tick += 1
 
 
 
 async def unlock_scheduler(days, startTime, endTime, device):
     logger.info('Starting open scheduler')
     device.isapi_doorctrl("close")
-    device.islocked = True
     startSeconds = strtime2seconds(startTime)
     endSeconds = strtime2seconds(endTime)
     days_int = []
@@ -221,8 +230,6 @@ async def unlock_scheduler(days, startTime, endTime, device):
             else:
                 if not device.islocked:
                     device.isapi_doorctrl("close")
-                    logger.info("Scheduler Finished")
-                    break
         else:
             await asyncio.sleep(60)
 
