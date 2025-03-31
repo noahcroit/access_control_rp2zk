@@ -12,11 +12,12 @@ def generate_http_digest_authen(username: str, password: str):
     auth = requests.auth.HTTPDigestAuth(username, password)
     return auth
 
-def isapi_listen2events(ipaddr, port):
-    auth = generate_http_digest_authen(admin_username, admin_password)
+def isapi_listen2events(ipaddr, port, username, password):
+    auth = generate_http_digest_authen(username, password)
     request_url = "http://" + ipaddr + ":" + str(port) + "/ISAPI/Event/notification/alertStream"
     r = requests.get(request_url, stream=True, auth=auth)
     r.raise_for_status()
+    """
     for line in r.iter_lines():
         try:
             decoded = line.decode("utf-8")
@@ -24,6 +25,14 @@ def isapi_listen2events(ipaddr, port):
         except:
             # image bytes here ignore them
             continue
+    """
+    data = r.raw.read(10)
+    try:
+        decoded = data.decode("utf-8")
+        print(decoded)
+    except:
+        # image bytes here ignore them
+        pass
 
 
 
@@ -40,10 +49,10 @@ if __name__ == "__main__":
     cfg = json.load(f_cfg) 
     ipaddr = cfg["ip_address"]
     port = cfg["port_isapi"]
-    admin_username = cfg["admin_user"]
-    admin_password = cfg["admin_password"]
+    username = cfg["admin_user"]
+    password = cfg["admin_password"]
 
-    t_event = threading.Thread(target=isapi_listen2events, args=(ipaddr, port))
+    t_event = threading.Thread(target=isapi_listen2events, args=(ipaddr, port, username, password))
     t_event.start()
     while True:
         print("Waiting for event...")
