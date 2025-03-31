@@ -5,25 +5,14 @@
 void app_accessctrl_init(app_accessctrl_t *dev) {
     // GPIO basic input setup
     dev->driver_set_gpio_output(dev->gpio_num_slidedoor);
-    app_accessctrl_unlock(dev);
-}
-
-void app_accessctrl_lock(app_accessctrl_t *dev) {
-    dev->driver_write_gpio(dev->gpio_num_slidedoor, true);
-    dev->lockstate = true;
-    dev->lockrequested = false;
-}
-
-void app_accessctrl_unlock(app_accessctrl_t *dev) {
     dev->driver_write_gpio(dev->gpio_num_slidedoor, false);
-    dev->lockstate = false;
-    dev->unlockrequested = false;
 }
 
-bool app_accessctrl_is_lock_requested(app_accessctrl_t *dev) {
-    return dev->lockrequested; 
+void app_accessctrl_close(app_accessctrl_t *dev) {
+    dev->driver_write_gpio(dev->gpio_num_slidedoor, false);
 }
 
-bool app_accessctrl_is_unlock_requested(app_accessctrl_t *dev) {
-    return dev->unlockrequested; 
+void app_accessctrl_open(app_accessctrl_t *dev) {
+    dev->driver_write_gpio(dev->gpio_num_slidedoor, true);
 }
+

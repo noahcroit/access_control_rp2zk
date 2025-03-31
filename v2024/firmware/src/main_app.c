@@ -7,12 +7,18 @@
 #include "app_dsk4t100.h"
 #include "app_outage.h"
 #include "app_accessctrl.h"
+
+#define USE_WIFI 1
+
+#if USE_WIFI == 1
 #include "app_mqtt.h"
+#endif
 
 #define PERIOD_GLOBAL_TICK_MS (uint32_t)1000
 #define STATE_IDLE 1
 #define STATE_ACTIVE 2  // when outage occured, fail-secure activates
-#define EXIT_DELAY_STARTVALUE 30
+#define EXIT_DELAY_STARTVALUE 15
+#define EXIT_OUTAGE_DELAY_STARTVALUE 30
 #define DIPSWITCH_MODE_SILENT_BUZZER 1
 #define WATCHDOG_TIME_MS (uint32_t)5000
 
@@ -22,18 +28,19 @@
  */
 void on_button_pressed_onboard();
 void on_button_pressed_exit();
+#if USE_WIFI == 1
 void on_mqtt_connection(mqtt_client_t* client, void* arg, mqtt_connection_status_t status);
 void on_mqtt_sub_request(void *arg, err_t err);
 void on_mqtt_incoming_publish(void *arg, const char *topic, u32_t tot_len);
 void on_mqtt_incoming_data(void *arg, const u8_t *data, u16_t len, u8_t flags);
 void on_mqtt_pub_request(void *arg, err_t result);
-
 /*
  * MQTT functions for apps. It can't be wrapped in app-layer (app_mqtt.c) because of IwIP doesn't allow to.
  *
  */
 void app_mqtt_connect(mqtt_client_t* client);
 void app_mqtt_publish(mqtt_client_t *client, const char *pub_topic, char *pub_payload);
+#endif
 
 /*
  * Struct for all devices
@@ -93,6 +100,7 @@ app_accessctrl_t ac = {
     .unlockrequested = false
 };
 
+#if USE_WIFI == 1
 mqtt_client_t* mqttc_lwip;
 const char *WIFI_SSID = "";
 const char *WIFI_PWD = "";
@@ -108,6 +116,7 @@ app_mqtt_status_t mqtt = {
     .state = MQTT_STATE_NOT_CONNECTED,
     .isconnected = false
 };
+#endif
 
 uint8_t state=STATE_IDLE;
 bool flag_exit_button=false;
@@ -133,6 +142,7 @@ int main() {
     app_accessctrl_init(&ac);
     app_outage_init(&outage);
 
+#if USE_WIFI == 1
     // WiFi initialize
     driver_rp2_enable_wifi();
     driver_rp2_connect_to_wifi(WIFI_SSID,
@@ -142,6 +152,7 @@ int main() {
     
     // MQTT client initialize
     mqttc_lwip = mqtt_client_new();
+#endif
     
     // Enable watchdog
     driver_rp2_watchdog_enable(WATCHDOG_TIME_MS);
@@ -151,7 +162,7 @@ int main() {
     uint32_t tick_previous_pub=0;
     while (1){
         current_tick = driver_rp2_get_global_tick();
-        driver_sleep_ms(250);
+        driver_sleep_ms(100);
         switch (state) {
             case STATE_IDLE:
                 // task : monitor an outage event
@@ -169,6 +180,7 @@ int main() {
                     app_dsk4t100_unlock(&locker);
                 }
 
+#if USE_WIFI == 1
                 // task : WiFi & MQTT connection
                 if(driver_rp2_is_wifi_connected()) {
                     if(!mqtt.isconnected) {
@@ -208,15 +220,19 @@ int main() {
                                                 WIFI_CONNECTING_TIMEOUT_MS
                                                 );
                 }
+#endif
 
-                // task : check slidedoor lock/unlock request from access control SW
-                if(app_accessctrl_is_unlock_requested(&ac)) {
-                    app_accessctrl_unlock(&ac);
-                    driver_debug_print("AC UNLOCK\n");
+                // task : check slidedoor exit request from Exit Button
+                if(flag_exit_button) {
+                    app_accessctrl_open(&ac);
+                    exit_cnt = EXIT_DELAY_STARTVALUE;
+                    flag_exit_button = false;
                 }
-                if(app_accessctrl_is_lock_requested(&ac)) {
-                    app_accessctrl_lock(&ac);
-                    driver_debug_print("AC LOCK\n");
+                if(exit_cnt > 0) {
+                    exit_cnt--;
+                    if(exit_cnt == 0) {
+                        app_accessctrl_close(&ac);
+                    }
                 }
                 break;
 
@@ -224,7 +240,7 @@ int main() {
                 // task : monitor EXIT button
                 if(flag_exit_button) {
                     app_dsk4t100_unlock(&locker);
-                    exit_cnt = EXIT_DELAY_STARTVALUE;
+                    exit_cnt = EXIT_OUTAGE_DELAY_STARTVALUE;
                     flag_exit_button = false;
                 }
                 if(exit_cnt > 0) {
@@ -238,6 +254,7 @@ int main() {
                     app_led_y_off(&led);
                     app_dsk4t100_unlock(&locker);
                     app_buzzer_off(&buzzer);
+                    app_accessctrl_close(&ac);
                     state = STATE_IDLE;
                 }
                 break;
@@ -260,6 +277,7 @@ void on_button_pressed_exit(){
     flag_exit_button = true;
 }
 
+#if USE_WIFI == 1
 void on_mqtt_connection(mqtt_client_t* client, void* arg, mqtt_connection_status_t status) {
     err_t err;
     driver_debug_print("cb is called!\n");
@@ -374,3 +392,4 @@ void app_mqtt_publish(mqtt_client_t *client, const char *pub_topic, char *pub_pa
                 on_mqtt_pub_request,
                 NULL);
 }
+#endif
