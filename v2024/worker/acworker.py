@@ -118,13 +118,12 @@ async def task_send2backend(redis):
     logger.info('Starting a REDIS pub for sending data to backend')
     while True:
         if not q2backend.empty():
+            # for islocked only, if there are more type of message (JSON etc), json.dump is needed
             d = q2backend.get()
-            txdata = json.dumps(d)
-            """
-            ch = "tag:access_control." + d["device"] + ".event"
-            logger.info("Publish tag value to REDIS")
+            ch, txdata = d
+            #logger.info("Publish tag value to REDIS")
+            #logger.info("tag : %s, value : %s", ch, txdata)
             await redis.publish(ch, txdata)
-            """
         await asyncio.sleep(0.1)
 
 
@@ -147,6 +146,14 @@ async def task_accessctrl(l_device):
         d.start_listen2event()
         dict_device.update({name: d})
     while True:
+        for device_name in dict_device:
+            val = str(dict_device[device_name].islocked)
+            tag_fullname = "tag:access_control." + device_name + ".islocked"
+            data=(tag_fullname, val)
+            if q2backend.full():
+                discard = q2backend.get()
+            q2backend.put(data)
+
         if not q2accessctrl.empty():
             logger.info('Read message from queue for AC devices')
             tag_fullname, val = q2accessctrl.get()
@@ -154,49 +161,49 @@ async def task_accessctrl(l_device):
             print(system_name, device_name, tagname, val)
 
             if tagname == "lock":
-                print("lock requested!")
+                logger.info("lock requested!")
                 res = dict_device[device_name].isapi_doorctrl("close")
             elif tagname == "always_lock":
-                print("always lock requested!")
+                logger.info("always lock requested!")
                 res = dict_device[device_name].isapi_doorctrl("alwaysClose")
             elif tagname == "unlock":
-                print("unlock requested!")
+                logger.info("unlock requested!")
                 res = dict_device[device_name].isapi_doorctrl("open")
             elif tagname == "always_unlock":
-                print("always unlock requested!")
+                logger.info("always unlock requested!")
                 res = dict_device[device_name].isapi_doorctrl("alwaysOpen")
             elif tagname == "unlock_schedule":
-                print("start unlock schedule requested!")
+                logger.info("start unlock schedule requested!")
                 days, tstart, tend = json_decode_from_backend(val, func="schedule")
                 print(days, tstart, tend)
                 t_scheduler = asyncio.create_task(unlock_scheduler(days, tstart, tend, dict_device[device_name]))
                 dict_scheduler.update({device_name: t_scheduler})
             elif tagname == "stop_schedule":
-                print("stop unlock schedule requested!")
+                logger.info("stop unlock schedule requested!")
                 dict_scheduler[device_name].cancel()
                 dict_device[device_name].isapi_doorctrl("close")
             elif tagname == "adduser":
-                print("add user requested!")
+                logger.info("add user requested!")
                 uid, user, pwd, valid, tstart, tend = json_decode_from_backend(val, func="add")
                 tstart = epoch2iso(tstart)
                 tend = epoch2iso(tend)
-                print(tstart, tend)
+                logger.info(tstart, tend)
                 if dict_device[device_name].isapi_searchUser(uid):
                     dict_device[device_name].isapi_delUser(uid, user)
                 res = dict_device[device_name].isapi_addUser(uid, user, pwd, valid, tstart, tend)
             elif tagname == "deluser":
-                print("delete user requested!")
+                logger.info("delete user requested!")
                 uid, user = json_decode_from_backend(val, func="del")
                 if dict_device[device_name].isapi_searchUser(uid):
                     res = dict_device[device_name].isapi_delUser(uid, user)
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.5)
 
 
 
 async def unlock_scheduler(days, startTime, endTime, device):
     logger.info('Starting open scheduler')
     device.isapi_doorctrl("close")
-    isopen=False
+    device.islocked = True
     startSeconds = strtime2seconds(startTime)
     endSeconds = strtime2seconds(endTime)
     days_int = []
@@ -205,17 +212,17 @@ async def unlock_scheduler(days, startTime, endTime, device):
     while True:
         day = DT.datetime.today().isoweekday()
         if day in days_int:
+            await asyncio.sleep(5)
             currentTime = DT.datetime.now().strftime("%H:%M:%S")
             currentSeconds = strtime2seconds(currentTime)
             if (currentSeconds >= startSeconds) and (currentSeconds <= endSeconds): 
-                if not isopen:
-                    device.isapi_doorctrl("open")
-                    isopen=True
+                if device.islocked:
+                    device.isapi_doorctrl("alwaysOpen")
             else:
-                if isopen:
+                if not device.islocked:
                     device.isapi_doorctrl("close")
-                    isopen=False
-            await asyncio.sleep(5)
+                    logger.info("Scheduler Finished")
+                    break
         else:
             await asyncio.sleep(60)
 
@@ -241,7 +248,7 @@ async def main(cfg):
     
     # create task(s)
     t1 = asyncio.create_task(task_listen2backend(pubsub, l_tag))
-    #t2 = asyncio.create_task(task_send2backend(redis))
+    t2 = asyncio.create_task(task_send2backend(redis))
     t3 = asyncio.create_task(task_accessctrl(l_device))
 
     # main loop
@@ -252,9 +259,9 @@ async def main(cfg):
         if t1.done():
             logger.info('Restart a task_listen')
             t1 = asyncio.create_task(task_listen2backend(pubsub, l_tag))
-    #    if t2.done():
-    #        logger.info('Restart a task_send')
-    #        t2 = asyncio.create_task(task_send2backend(redis))
+        if t2.done():
+            logger.info('Restart a task_send')
+            t2 = asyncio.create_task(task_send2backend(redis))
         if t3.done():
             logger.info('Restart a task_accessctrl')
             t3 = asyncio.create_task(task_accessctrl(l_device))

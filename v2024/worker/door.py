@@ -15,9 +15,11 @@ class DSK1T105AM():
         self.admin_password = password
         self.ipaddr = ipaddr
         self.port = port
-        self.doorstate = None
+        self.islocked = None
         # REDIS for event (non-async)
         self.pub = redis.Redis(host='localhost', port=6379, password="ictadmin")
+        self.isapi_doorctrl("close")
+        self.islocked = True 
     
     @staticmethod
     def _generate_http_digest_authen(username: str, password: str):
@@ -107,6 +109,11 @@ class DSK1T105AM():
     
     def isapi_doorctrl(self, cmd: str):
         if cmd in ["open", "close", "alwaysOpen", "alwaysClose"]:
+            if cmd == "alwaysOpen":
+                self.islocked = False
+            else:
+                self.islocked = True
+    
             # generate XML string for remote door control
             payload = self._generate_xml_doorctrl(cmd)
             doorID = 1
