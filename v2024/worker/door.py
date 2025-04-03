@@ -8,8 +8,61 @@ import redis
 
 
 
+class decoder_statemachine:
+    def __init__(self):
+        self.state = "IDLE"
+        self.response_buffer = b""
+        self.response_size = 0
+
+    def reset(self):
+        self.response_buffer = b""
+        self.response_size = 0
+        self.state = "IDLE"
+    
+    def step(self, line):
+        decoded = ""
+        try:
+            decoded = line.decode("utf-8")
+            #print(decoded)
+        except:
+            # image bytes here ignore them
+            pass
+
+        if self.state == "IDLE":
+            if decoded == "--boundary":
+                self.state = "HEADER"
+            return None
+
+        elif self.state == "HEADER":
+            if decoded.startswith("Content-Length"):
+                decoded.replace(" ", "")
+                content_length = decoded.split(":")[1]
+                self.response_size = int(content_length)
+            if decoded == "{":
+                self.state = "BODY"
+                self.response_buffer += line
+                self.response_buffer += b"\n"
+            return None
+
+        elif self.state == "BODY":
+            self.response_buffer += line
+            if len(self.response_buffer) < self.response_size:
+                self.response_buffer += b"\n"
+            else:
+                self.state = "EOM"
+            return None
+
+        elif self.state == "EOM":
+            if decoded == "--boundary":
+                event_json = json.loads(self.response_buffer)
+                self.reset()
+                return event_json
+            return None
+
+
+
 class DSK1T105AM():
-    def __init__(self, name, user, password, ipaddr, port):
+    def __init__(self, name, user, password, ipaddr, port, redis_port, redis_password):
         self.name = name
         self.admin_user = user
         self.admin_password = password
@@ -17,7 +70,8 @@ class DSK1T105AM():
         self.port = port
         self.islocked = None
         # REDIS for event (non-async)
-        self.pub = redis.Redis(host='localhost', port=6379, password="ictadmin")
+        self.pub = redis.Redis(host='localhost', port=redis_port, password=redis_password)
+        self.tagname_event = "tag:access_control." + self.name + ".event"
         self.isapi_doorctrl("close")
         self.islocked = True 
     
@@ -167,55 +221,19 @@ class DSK1T105AM():
         self.task_event = threading.Thread(target=self._listen2event, args=())
         self.task_event.start()
 
+    @staticmethod
     def _listen2event(self):
+        s = decoder_statemachine()
+        auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
         request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/Event/notification/alertStream"
-        while True:
-            with requests.Session() as s:
-                auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
-                r = s.get(request_url, stream=True, auth=auth)
-                r.raise_for_status()
-                
-                try:
-                    in_header = False             # are we parsing headers at the moment
-                    grabbing_response = False     # are we grabbing the response at the moment
-                    response_size = 0             # the response size that we take from Content-Length
-                    response_buffer = b""         # where we keep the reponse bytes
+        r = requests.get(request_url, stream=True, auth=auth)
+        r.raise_for_status()
+        for line in r.iter_lines(chunk_size=1):
+            event_json = s.step(line)
+            if event_json != None:
+                self._publish_event(event_json) 
 
-                    for line in r.iter_lines(chunk_size=620):
-                        decoded = ""
-                        try:
-                            decoded = line.decode("utf-8")
-                        except:
-                            # image bytes here ignore them
-                            continue
-                        
-                        if decoded == "--boundary":                
-                            in_header = True
-
-                        if in_header:
-                            if decoded.startswith("Content-Length"):
-                                decoded.replace(" ", "")
-                                content_length = decoded.split(":")[1]
-                                response_size = int(content_length)
-
-                            if decoded == "":
-                                in_header = False
-                                grabbing_response = True
-
-                        elif grabbing_response:
-                            response_buffer += line
-
-                            if len(response_buffer) != response_size:
-                                response_buffer += b"\n"
-                            else:
-                                # time to convert it json and return it
-                                grabbing_response = False
-                                event_msg = json.loads(response_buffer)
-                                self._publish_event(event_msg)
-                                response_buffer = b""
-                except:
-                    continue
-
+    @staticmethod
     def _publish_event(self, event):
         print("Event incoming from device:", self.name)
         print(event)
@@ -234,10 +252,8 @@ class DSK1T105AM():
                     d.update({"device" : self.name})
                     d.update({"data" : data})
                     d.update({"timestamp" : timestamp})
-                    ch = "tag:access_control." + self.name + ".event"
-                    print("ch:", ch)
                     message = json.dumps(d)
-                    self.pub.publish(ch, message)
+                    self.pub.publish(self.tagname_event, message)
                 else:
                     print("An event with empty Card ID")
         except Exception as e:

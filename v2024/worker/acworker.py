@@ -118,7 +118,7 @@ async def task_listen2backend(channel: aioredis.client.PubSub, taglist):
 
 
 
-async def task_send2backend(redis):
+async def task_update2backend(redis):
     global q2backend
     logger.info('Starting a REDIS pub for sending data to backend')
     while True:
@@ -255,7 +255,7 @@ async def main(cfg):
     
     # create task(s)
     t1 = asyncio.create_task(task_listen2backend(pubsub, l_tag))
-    t2 = asyncio.create_task(task_send2backend(redis))
+    t2 = asyncio.create_task(task_update2backend(redis))
     t3 = asyncio.create_task(task_accessctrl(l_device))
 
     # main loop
@@ -268,7 +268,7 @@ async def main(cfg):
             t1 = asyncio.create_task(task_listen2backend(pubsub, l_tag))
         if t2.done():
             logger.info('Restart a task_send')
-            t2 = asyncio.create_task(task_send2backend(redis))
+            t2 = asyncio.create_task(task_update2backend(redis))
         if t3.done():
             logger.info('Restart a task_accessctrl')
             t3 = asyncio.create_task(task_accessctrl(l_device))
