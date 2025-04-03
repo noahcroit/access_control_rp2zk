@@ -221,19 +221,21 @@ class DSK1T105AM():
         self.task_event = threading.Thread(target=self._listen2event, args=())
         self.task_event.start()
 
-    @staticmethod
     def _listen2event(self):
-        s = decoder_statemachine()
-        auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
-        request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/Event/notification/alertStream"
-        r = requests.get(request_url, stream=True, auth=auth)
-        r.raise_for_status()
-        for line in r.iter_lines(chunk_size=1):
-            event_json = s.step(line)
-            if event_json != None:
-                self._publish_event(event_json) 
+        try:
+            s = decoder_statemachine()
+            auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
+            request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/Event/notification/alertStream"
+            r = requests.get(request_url, stream=True, auth=auth)
+            r.raise_for_status()
+            
+            for line in r.iter_lines(chunk_size=1):
+                event_json = s.step(line)
+                if event_json != None:
+                    self._publish_event(event_json)
+        except ConnectionResetError as e:
+            self.start_listen2event()
 
-    @staticmethod
     def _publish_event(self, event):
         print("Event incoming from device:", self.name)
         print(event)

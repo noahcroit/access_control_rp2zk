@@ -151,7 +151,7 @@ async def task_accessctrl(l_device):
                         device_info["port"],
                         cfg["redis_url"],
                         cfg["redis_port"],
-                        cfg["redis_password"]
+                        cfg["redis_pwd"]
                     )
         d.start_listen2event()
         dict_device.update({name: d})
@@ -245,7 +245,7 @@ async def main():
     # REDIS initialization
     logger.info('REDIS client initialize')
     redis_client = aioredis.from_url("redis://" + cfg["redis_url"] + ":" + str(cfg["redis_port"]), password=cfg["redis_pwd"])
-    pubsub = redis.pubsub()
+    pubsub = redis_client.pubsub()
     logger.info('REDIS OK')
 
     print("List of devices and tags")
