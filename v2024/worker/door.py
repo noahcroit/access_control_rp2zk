@@ -62,7 +62,7 @@ class decoder_statemachine:
 
 
 class DSK1T105AM():
-    def __init__(self, name, user, password, ipaddr, port, redis_port, redis_password):
+    def __init__(self, name, user, password, ipaddr, port, redis_url, redis_port, redis_password):
         self.name = name
         self.admin_user = user
         self.admin_password = password
@@ -70,7 +70,7 @@ class DSK1T105AM():
         self.port = port
         self.islocked = None
         # REDIS for event (non-async)
-        self.pub = redis.Redis(host='localhost', port=redis_port, password=redis_password)
+        self.pub = redis.Redis(host=redis_url, port=redis_port, password=redis_password)
         self.tagname_event = "tag:access_control." + self.name + ".event"
         self.isapi_doorctrl("close")
         self.islocked = True 

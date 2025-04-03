@@ -118,7 +118,7 @@ async def task_listen2backend(channel: aioredis.client.PubSub, taglist):
 
 
 
-async def task_update2backend(redis):
+async def task_update2backend(redis_client):
     global q2backend
     logger.info('Starting a REDIS pub for sending data to backend')
     while True:
@@ -128,12 +128,13 @@ async def task_update2backend(redis):
             ch, txdata = d
             logger.info("Publish tag value to REDIS")
             logger.info("tag : %s, value : %s", ch, txdata)
-            await redis.publish(ch, txdata)
+            await redis_client.publish(ch, txdata)
         await asyncio.sleep(0.1)
 
 
 
 async def task_accessctrl(l_device):
+    global cfg
     global q2accessctrl
     global q2backend
     dict_scheduler = {} 
@@ -147,7 +148,10 @@ async def task_accessctrl(l_device):
                         device_info["admin_user"],
                         device_info["admin_password"],
                         device_info["ipaddr"],
-                        device_info["port"]
+                        device_info["port"],
+                        cfg["redis_url"],
+                        cfg["redis_port"],
+                        cfg["redis_password"]
                     )
         d.start_listen2event()
         dict_device.update({name: d})
@@ -236,10 +240,11 @@ async def unlock_scheduler(days, startTime, endTime, device):
 
 
 
-async def main(cfg):
+async def main():
+    global cfg
     # REDIS initialization
     logger.info('REDIS client initialize')
-    redis = aioredis.from_url(cfg["redis_url"], password=cfg["redis_pwd"])
+    redis_client = aioredis.from_url("redis://" + cfg["redis_url"] + ":" + str(cfg["redis_port"]), password=cfg["redis_pwd"])
     pubsub = redis.pubsub()
     logger.info('REDIS OK')
 
@@ -255,7 +260,7 @@ async def main(cfg):
     
     # create task(s)
     t1 = asyncio.create_task(task_listen2backend(pubsub, l_tag))
-    t2 = asyncio.create_task(task_update2backend(redis))
+    t2 = asyncio.create_task(task_update2backend(redis_client))
     t3 = asyncio.create_task(task_accessctrl(l_device))
 
     # main loop
@@ -268,7 +273,7 @@ async def main(cfg):
             t1 = asyncio.create_task(task_listen2backend(pubsub, l_tag))
         if t2.done():
             logger.info('Restart a task_send')
-            t2 = asyncio.create_task(task_update2backend(redis))
+            t2 = asyncio.create_task(task_update2backend(redis_client))
         if t3.done():
             logger.info('Restart a task_accessctrl')
             t3 = asyncio.create_task(task_accessctrl(l_device))
@@ -306,4 +311,4 @@ if __name__ == '__main__':
 
     # run main program
     logger.info('Starting an access control worker')
-    asyncio.run(main(cfg))
+    asyncio.run(main())
