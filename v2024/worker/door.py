@@ -5,6 +5,7 @@ import requests
 import threading
 import time
 import redis
+lock = threading.Lock()
 
 
 
@@ -62,12 +63,13 @@ class decoder_statemachine:
 
 
 class DSK1T105AM():
-    def __init__(self, name, user, password, ipaddr, port, redis_url, redis_port, redis_password):
+    def __init__(self, name, user, password, ipaddr, port, redis_url, redis_port, redis_password, ssl_verify=False):
         self.name = name
         self.admin_user = user
         self.admin_password = password
         self.ipaddr = ipaddr
         self.port = port
+        self.verify = ssl_verify
         self.islocked = None
         # REDIS for event (non-async)
         self.pub = redis.Redis(host=redis_url, port=redis_port, password=redis_password)
@@ -158,7 +160,7 @@ class DSK1T105AM():
     def isapi_deviceinfo(self):
         auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
         request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/System/deviceInfo"
-        response = requests.get(request_url, auth=auth)
+        response = requests.get(request_url, auth=auth, verify=self.verify)
         return response
     
     def isapi_doorctrl(self, cmd: str):
@@ -173,7 +175,7 @@ class DSK1T105AM():
             doorID = 1
             auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
             request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/AccessControl/RemoteControl/door/" + str(doorID)
-            response = requests.put(request_url, data=payload, auth=auth)
+            response = requests.put(request_url, data=payload, auth=auth, verify=self.verify)
             return response
         else:
             return None
@@ -182,7 +184,7 @@ class DSK1T105AM():
         auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
         body = self._generate_payload_searchuser(employeeID)
         request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/AccessControl/UserInfo/Search?format=json"
-        response = requests.post(request_url, data=json.dumps(body), auth=auth)
+        response = requests.post(request_url, data=json.dumps(body), auth=auth, verify=self.verify)
         res_json = json.loads(response.content)
         if res_json["UserInfoSearch"]["responseStatusStrg"] == "NO MATCH":
             return False
@@ -193,7 +195,7 @@ class DSK1T105AM():
         auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
         body = self._generate_payload_adduser(employeeID, username, password, valid, begin, end)
         request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/AccessControl/UserInfo/Record?format=json"
-        response = requests.post(request_url, data=json.dumps(body), auth=auth)
+        response = requests.post(request_url, data=json.dumps(body), auth=auth, verify=self.verify)
         res_json = json.loads(response.content)
         return res_json
 
@@ -203,7 +205,7 @@ class DSK1T105AM():
             # delete only user, not admin (ID=1)
             body = self._generate_payload_deleteuser(employeeID)
             request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/AccessControl/UserInfo/Delete?format=json"
-            response = requests.put(request_url, data=json.dumps(body), auth=auth)
+            response = requests.put(request_url, data=json.dumps(body), auth=auth, verify=self.verify)
             res_json = json.loads(response.content)
             return res_json
         else:
@@ -224,10 +226,12 @@ class DSK1T105AM():
     def _listen2event(self):
         try:
             s = decoder_statemachine()
+            lock.acquire()
             auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
             request_url = "http://" + self.ipaddr + ":" + str(self.port) + "/ISAPI/Event/notification/alertStream"
-            r = requests.get(request_url, stream=True, auth=auth)
+            r = requests.get(request_url, stream=True, auth=auth, verify=self.verify)
             r.raise_for_status()
+            lock.release()
             
             for line in r.iter_lines(chunk_size=1):
                 event_json = s.step(line)
