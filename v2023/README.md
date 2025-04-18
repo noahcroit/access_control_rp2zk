@@ -5,6 +5,8 @@ The access control unit is from ZkTeco brand. `pyzk` project is used for the pyt
 The project can be found in here https://github.com/fananimi/pyzk
 
 ### Fail-Secure Door Controller with Pico W (RP2040)
+![Alt text](etc/failsecure_rp2.jpg)
+
 The firmware is written in micropython, stored in folder `rp2`. `ampy` can be used to upload the codes to MCU.
 To upload firmware.
 1. Upload micropython firmware .uf2 of Pico W. The latest firmware can be founded in here
