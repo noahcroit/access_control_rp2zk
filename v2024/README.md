@@ -20,7 +20,7 @@ To build the image <br>
 cd worker
 docker build -t acworker2024-image .
 ```
-<br>
+
 To run the worker as container <br>
 ```
 docker run --network host -d --restart always --name acworker acworker2024-image
