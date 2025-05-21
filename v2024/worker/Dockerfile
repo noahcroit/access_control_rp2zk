@@ -6,6 +6,9 @@ WORKDIR /home/acworker/
 
 RUN apt-get update && apt-get upgrade -y
 RUN python -m pip install -r requirements.txt
+RUN apt-get install -y tzdata
+
+ENV TZ=Asia/Bangkok
 
 EXPOSE 8080
 EXPOSE 80
