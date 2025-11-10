@@ -1457,168 +1457,6 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Diode:SMAJ26CA"
-			(pin_numbers
-				(hide yes)
-			)
-			(pin_names
-				(offset 1.016)
-				(hide yes)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "D"
-				(at 0 2.54 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "SMAJ26CA"
-				(at 0 -2.54 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" "Diode_SMD:D_SMA"
-				(at 0 -5.08 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" "https://www.littelfuse.com/media?resourcetype=datasheets&itemid=75e32973-b177-4ee3-a0ff-cedaf1abdb93&filename=smaj-datasheet"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" "400W bidirectional Transient Voltage Suppressor, 26.0Vr, SMA(DO-214AC)"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_keywords" "bidirectional diode TVS voltage suppressor"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_fp_filters" "D*SMA*"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "SMAJ26CA_0_1"
-				(polyline
-					(pts
-						(xy -2.54 -1.27) (xy 0 0) (xy -2.54 1.27) (xy -2.54 -1.27)
-					)
-					(stroke
-						(width 0.2032)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0.508 1.27) (xy 0 1.27) (xy 0 -1.27) (xy -0.508 -1.27)
-					)
-					(stroke
-						(width 0.2032)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 1.27 0) (xy -1.27 0)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 2.54 1.27) (xy 2.54 -1.27) (xy 0 0) (xy 2.54 1.27)
-					)
-					(stroke
-						(width 0.2032)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "SMAJ26CA_1_1"
-				(pin passive line
-					(at -3.81 0 0)
-					(length 2.54)
-					(name "A1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 3.81 0 180)
-					(length 2.54)
-					(name "A2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
 		(symbol "HX_PM2.54-2x5P_WT:HXPM2.54-2X5PWT"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -13454,7 +13292,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "Red"
+		(property "Value" "Yellow"
 			(at 224.79 46.0374 90)
 			(effects
 				(font
@@ -13499,7 +13337,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part" "C2295"
+		(property "LCSC Part" "C2296"
 			(at 220.98 43.18 90)
 			(effects
 				(font
@@ -13967,7 +13805,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part" "C304185"
+		(property "LCSC Part" "C21189"
 			(at 231.14 118.11 90)
 			(effects
 				(font
@@ -14109,7 +13947,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part" "C304185"
+		(property "LCSC Part" "C21189"
 			(at 279.4 199.39 90)
 			(effects
 				(font
@@ -16126,85 +15964,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Diode:SMAJ26CA")
-		(at 63.5 44.45 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "88ee32cc-4d7b-47bf-bc67-aaba81938078")
-		(property "Reference" "D1"
-			(at 66.04 43.1799 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Value" "SMAJ26CA"
-			(at 66.04 45.7199 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" "Diode_SMD:D_SMA"
-			(at 68.58 44.45 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "https://www.littelfuse.com/media?resourcetype=datasheets&itemid=75e32973-b177-4ee3-a0ff-cedaf1abdb93&filename=smaj-datasheet"
-			(at 63.5 44.45 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "400W bidirectional Transient Voltage Suppressor, 26.0Vr, SMA(DO-214AC)"
-			(at 63.5 44.45 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "LCSC Part" "C173517"
-			(at 63.5 44.45 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "96d2d528-8b09-4791-9cd0-2adad2ad34c1")
-		)
-		(pin "2"
-			(uuid "22dc84cc-0042-44fa-9b2b-c97e7e0d21bc")
-		)
-		(instances
-			(project ""
-				(path "/4175a3da-4c52-428e-a864-babd20cead6f"
-					(reference "D1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "YS-SBZ9650DYB05:YS-SBZ9650DYB05_C409830")
 		(at 179.07 189.23 180)
 		(unit 1)
@@ -16648,6 +16407,85 @@
 			(project "FailSecure_DS-K4T100"
 				(path "/4175a3da-4c52-428e-a864-babd20cead6f"
 					(reference "R3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Diode:SMAJ26A")
+		(at 63.5 44.45 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "922ba3c9-a4a2-4bb9-85aa-fbcb1cc3ff55")
+		(property "Reference" "D1"
+			(at 66.04 43.1799 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "SMAJ26A"
+			(at 66.04 45.7199 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Diode_SMD:D_SMA"
+			(at 58.42 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://www.littelfuse.com/media?resourcetype=datasheets&itemid=75e32973-b177-4ee3-a0ff-cedaf1abdb93&filename=smaj-datasheet"
+			(at 63.5 43.18 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "400W unidirectional Transient Voltage Suppressor, 26.0Vr, SMA(DO-214AC)"
+			(at 63.5 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC Part" "C148225"
+			(at 63.5 44.45 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "9792389a-a216-4035-be64-5cc815c3cc69")
+		)
+		(pin "1"
+			(uuid "c744bcea-040f-412f-9872-6ed17ede5ce8")
+		)
+		(instances
+			(project "FailSecure_DS-K4T100"
+				(path "/4175a3da-4c52-428e-a864-babd20cead6f"
+					(reference "D1")
 					(unit 1)
 				)
 			)
@@ -17980,7 +17818,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part" "C304185"
+		(property "LCSC Part" "C21189"
 			(at 165.1 255.27 90)
 			(effects
 				(font
@@ -20003,7 +19841,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part" "C304185"
+		(property "LCSC Part" "C21189"
 			(at 231.14 133.35 90)
 			(effects
 				(font
