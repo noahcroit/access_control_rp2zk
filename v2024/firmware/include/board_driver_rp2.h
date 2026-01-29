@@ -36,9 +36,10 @@
 #define DO_LED_B 4
 #define DO_LED_Y 5
 #define DO_BUZZER 11
-#define DO_DOORLOCK 18
-#define DI_DOORSTATUS 19
-#define DI_LOCKSTATUS 20
+#define DO_DOORLOCK_PWR 18
+#define DO_DOORLOCK_OPEN 19
+#define DI_DOORSTATUS 20
+#define DI_LOCKSTATUS 21
 #define DO_ACCESSCTRLLOCK 28
 
 

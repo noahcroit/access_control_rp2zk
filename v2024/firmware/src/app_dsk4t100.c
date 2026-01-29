@@ -17,11 +17,11 @@ void app_dsk4t100_lock(app_dsk4t100_t *dev) {
 }
 
 void app_dsk4t100_unlock(app_dsk4t100_t *dev) {
-    dev->driver_write_gpio(dev->gpio_num_lockstatus, false);
-    driver_sleep_ms(500);
+    //dev->driver_write_gpio(dev->gpio_num_lockstatus, false);
+    //driver_sleep_ms(500);
     dev->driver_write_gpio(dev->gpio_num_lockctrl, false);
     driver_sleep_ms(500);
-    dev->driver_write_gpio(dev->gpio_num_lockstatus, true);
+    //dev->driver_write_gpio(dev->gpio_num_lockstatus, true);
     dev->lockstate = false;
 }
 
