@@ -8,7 +8,7 @@
 #include "app_outage.h"
 #include "app_accessctrl.h"
 
-#define USE_WIFI 1
+#define USE_WIFI 0
 
 #if USE_WIFI == 1
 #include "app_mqtt.h"
@@ -177,7 +177,6 @@ int main() {
                     break;
                 }
                 else {
-                    app_dsk4t100_unlock(&locker);
                 }
 
 #if USE_WIFI == 1
