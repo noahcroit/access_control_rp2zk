@@ -77,7 +77,7 @@ app_dsk4t100_t locker = {
     .driver_write_gpio = driver_rp2_write_gpio,
     .driver_set_gpio_input = driver_rp2_set_gpio_input,
     .driver_set_gpio_output = driver_rp2_set_gpio_output,
-    .gpio_num_lockctrl = DO_DOORLOCK,
+    .gpio_num_lockctrl = DO_DOORLOCK_PWR,
     .gpio_num_lockstatus = DI_LOCKSTATUS,
     .gpio_num_doorstatus = DI_DOORSTATUS
 };

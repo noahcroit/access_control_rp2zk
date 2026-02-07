@@ -8,7 +8,8 @@ void app_dsk4t100_init(app_dsk4t100_t *dev) {
     dev->driver_set_gpio_output(dev->gpio_num_lockctrl);
     dev->driver_set_gpio_output(dev->gpio_num_lockstatus);
     dev->driver_set_gpio_input(dev->gpio_num_doorstatus, false);
-    app_dsk4t100_unlock(dev);
+    //app_dsk4t100_unlock(dev);
+    app_dsk4t100_lock(dev);
 }
 
 void app_dsk4t100_lock(app_dsk4t100_t *dev) {
