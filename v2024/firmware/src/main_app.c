@@ -17,7 +17,7 @@
 #define PERIOD_GLOBAL_TICK_MS (uint32_t)1000
 #define STATE_IDLE 1
 #define STATE_ACTIVE 2  // when outage occured, fail-secure activates
-#define EXIT_DELAY_STARTVALUE 15
+#define EXIT_DELAY_STARTVALUE 30
 #define EXIT_OUTAGE_DELAY_STARTVALUE 30
 #define DIPSWITCH_MODE_SILENT_BUZZER 1
 #define WATCHDOG_TIME_MS (uint32_t)5000
@@ -160,6 +160,7 @@ int main() {
     uint8_t exit_cnt=0;
     uint32_t current_tick=0;
     uint32_t tick_previous_pub=0;
+    app_dsk4t100_lock(&locker);
     while (1){
         current_tick = driver_rp2_get_global_tick();
         driver_sleep_ms(100);
@@ -221,16 +222,18 @@ int main() {
                 }
 #endif
 
-                // task : check slidedoor exit request from Exit Button
+                // task : check exit request from Exit Button
                 if(flag_exit_button) {
-                    app_accessctrl_open(&ac);
+                    //app_accessctrl_open(&ac);
+                    app_dsk4t100_unlock(&locker);
                     exit_cnt = EXIT_DELAY_STARTVALUE;
                     flag_exit_button = false;
                 }
                 if(exit_cnt > 0) {
                     exit_cnt--;
                     if(exit_cnt == 0) {
-                        app_accessctrl_close(&ac);
+                        //app_accessctrl_close(&ac);
+                        app_dsk4t100_lock(&locker);
                     }
                 }
                 break;
@@ -251,9 +254,9 @@ int main() {
                 // task : monitor outage, if power is returned or not.
                 if(!app_is_outage_occured(&outage)) {
                     app_led_y_off(&led);
-                    app_dsk4t100_unlock(&locker);
+                    app_dsk4t100_lock(&locker);
                     app_buzzer_off(&buzzer);
-                    app_accessctrl_close(&ac);
+                    //app_accessctrl_open(&ac);
                     state = STATE_IDLE;
                 }
                 break;
