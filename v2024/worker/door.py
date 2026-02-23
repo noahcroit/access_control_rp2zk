@@ -7,6 +7,16 @@ import time
 import redis
 lock = threading.Lock()
 
+import logging
+# setup logging system
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
 
 
 class decoder_statemachine:
@@ -220,11 +230,13 @@ class DSK1T105AM():
         pass
    
     def start_listen2event(self):
+        logger.info('Start listen2event (in door')
         self.task_event = threading.Thread(target=self._listen2event, args=())
         self.task_event.start()
 
     def _listen2event(self):
         try:
+            logger.info('Start listen2event (in door/_listen2event)')
             s = decoder_statemachine()
             lock.acquire()
             auth = self._generate_http_digest_authen(self.admin_user, self.admin_password)
@@ -233,9 +245,11 @@ class DSK1T105AM():
             r.raise_for_status()
             lock.release()
             
+            logger.info("wait for newline...")
             for line in r.iter_lines(chunk_size=1):
                 event_json = s.step(line)
                 if event_json != None:
+                    logger.info(event_json)
                     self._publish_event(event_json)
         except ConnectionResetError as e:
             self.start_listen2event()

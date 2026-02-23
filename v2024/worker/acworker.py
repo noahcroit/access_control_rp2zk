@@ -142,8 +142,8 @@ async def task_accessctrl(l_device):
     tick = 0
     logger.info('Starting a access control tasks (DS-K1T105AM and pico failsecure)')
     for name, device_info in l_device:
-        print(name)
-        print(device_info)  
+        logger.info(name)
+        logger.info(device_info)
         d = DSK1T105AM(name, 
                         device_info["admin_user"],
                         device_info["admin_password"],
@@ -153,6 +153,7 @@ async def task_accessctrl(l_device):
                         cfg["redis_port"],
                         cfg["redis_pwd"]
                     )
+        logger.info('Start listen2event (from acworker)')
         d.start_listen2event()
         dict_device.update({name: d})
     while True:
