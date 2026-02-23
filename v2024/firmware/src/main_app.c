@@ -230,10 +230,12 @@ int main() {
                     flag_exit_button = false;
                 }
                 if(exit_cnt > 0) {
-                    exit_cnt--;
-                    if(exit_cnt == 0) {
-                        //app_accessctrl_close(&ac);
-                        app_dsk4t100_lock(&locker);
+                    if(!app_is_button_pressed_exit(&button)) {
+                        exit_cnt--;
+                        if(exit_cnt == 0) {
+                            //app_accessctrl_close(&ac);
+                            app_dsk4t100_lock(&locker);
+                        }
                     }
                 }
                 break;
@@ -246,9 +248,11 @@ int main() {
                     flag_exit_button = false;
                 }
                 if(exit_cnt > 0) {
-                    exit_cnt--;
-                    if(exit_cnt == 0) {
-                        app_dsk4t100_lock(&locker);
+                    if(!app_is_button_pressed_exit(&button)) {
+                        exit_cnt--;
+                        if(exit_cnt == 0) {
+                            app_dsk4t100_lock(&locker);
+                        }
                     }
                 }
                 // task : monitor outage, if power is returned or not.
