@@ -1,0 +1,12 @@
+[Unit]
+Description=Check Internet and Authenticate
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /home/pi/Auto-Authen-KMITL/check_internet.sh
+User=pi
+Group=pi
+
+[Install]
+WantedBy=multi-user.target

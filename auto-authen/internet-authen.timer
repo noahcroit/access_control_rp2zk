@@ -1,0 +1,10 @@
+[Unit]
+Description=Run internet authentication check every 10 minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=10min
+Unit=internet-authen.service
+
+[Install]
+WantedBy=timers.target
